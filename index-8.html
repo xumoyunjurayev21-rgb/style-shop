@@ -1,0 +1,2856 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Style Shop</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --pink:#f4a7b9; --pink-deep:#e07a95; --pink-light:#fce4ec;
+      --pink-soft:#fdf0f4; --pink-glow:rgba(224,122,149,.15);
+      --white:#ffffff; --dark:#2a1a20; --gray:#8a7070;
+      --gray-light:#f7f0f2; --surface:#1a1118; --surface2:#231829;
+      --border:rgba(244,167,185,.1); --green:#4ade80; --yellow:#fbbf24;
+      --red:#f87171; --blue:#60a5fa;
+    }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; }
+    body { font-family:'DM Sans',sans-serif; background:var(--white); color:var(--dark); overflow-x:hidden; }
+    .page { display:none; min-height:100vh; }
+    .page.active { display:block; }
+
+    /* NAV */
+    nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:1rem 5%; background:rgba(255,255,255,.95); backdrop-filter:blur(12px); border-bottom:1px solid rgba(244,167,185,.2); }
+    .nav-logo { font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--pink-deep); cursor:pointer; }
+    .nav-logo span { font-style:italic; }
+    .nav-links { display:flex; gap:1.5rem; list-style:none; }
+    .nav-links a { text-decoration:none; color:var(--dark); font-size:.88rem; font-weight:500; cursor:pointer; transition:color .2s; }
+    .nav-links a:hover { color:var(--pink-deep); }
+    .nav-icons { display:flex; gap:1rem; align-items:center; }
+    .nav-icons button { background:none; border:none; cursor:pointer; font-size:1.1rem; color:var(--dark); position:relative; }
+    .cart-badge { position:absolute; top:-6px; right:-6px; background:var(--pink-deep); color:#fff; border-radius:50%; width:16px; height:16px; font-size:.6rem; display:flex; align-items:center; justify-content:center; }
+
+    /* HERO */
+    .hero { min-height:100vh; display:grid; grid-template-columns:1fr 1fr; align-items:center; padding:6rem 5% 3rem; background:linear-gradient(135deg,var(--pink-soft),var(--white)); position:relative; overflow:hidden; }
+    .hero::before { content:''; position:absolute; top:-120px; right:-120px; width:500px; height:500px; background:radial-gradient(circle,rgba(244,167,185,.3),transparent 70%); border-radius:50%; animation:pulse 6s ease-in-out infinite; }
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+    .hero-badge { display:inline-block; background:var(--pink-light); color:var(--pink-deep); padding:.4rem 1rem; border-radius:50px; font-size:.8rem; font-weight:500; text-transform:uppercase; margin-bottom:1.5rem; }
+    .hero h1 { font-family:'Playfair Display',serif; font-size:clamp(2rem,5vw,3.5rem); line-height:1.15; margin-bottom:1.2rem; }
+    .hero h1 em { font-style:italic; color:var(--pink-deep); }
+    .hero p { font-size:1rem; color:var(--gray); line-height:1.7; max-width:420px; margin-bottom:2rem; }
+    .hero-btns { display:flex; gap:1rem; flex-wrap:wrap; }
+    .btn-primary { background:var(--pink-deep); color:#fff; padding:.8rem 2rem; border-radius:50px; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:.9rem; font-weight:500; transition:all .2s; box-shadow:0 8px 24px rgba(224,122,149,.35); }
+    .btn-primary:hover { background:#c45570; transform:translateY(-2px); }
+    .btn-secondary { background:transparent; color:var(--dark); padding:.8rem 2rem; border-radius:50px; border:1.5px solid var(--pink); cursor:pointer; font-family:'DM Sans',sans-serif; font-size:.9rem; transition:all .2s; }
+    .btn-secondary:hover { background:var(--pink-light); }
+    .hero-image { display:flex; justify-content:center; align-items:center; position:relative; }
+    .hero-img-wrap { width:320px; height:400px; border-radius:60% 40% 55% 45%/50% 45% 55% 50%; background:linear-gradient(145deg,var(--pink-light),var(--pink)); display:flex; align-items:center; justify-content:center; font-size:7rem; animation:morph 8s ease-in-out infinite; box-shadow:0 20px 60px rgba(224,122,149,.25); }
+    @keyframes morph{0%,100%{border-radius:60% 40% 55% 45%/50% 45% 55% 50%}50%{border-radius:45% 55% 40% 60%/55% 40% 60% 45%}}
+    .floating-card { position:absolute; background:#fff; border-radius:14px; padding:.6rem 1rem; box-shadow:0 8px 24px rgba(0,0,0,.1); display:flex; align-items:center; gap:.5rem; font-size:.75rem; font-weight:500; animation:float 4s ease-in-out infinite; }
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+    .card-top { top:30px; right:0; }
+    .card-bottom { bottom:40px; left:-10px; animation-delay:2s; }
+    .card-dot { width:8px; height:8px; border-radius:50%; }
+
+    /* SECTIONS */
+    .section { padding:4rem 5%; }
+    .section-head { text-align:center; margin-bottom:2.5rem; }
+    .section-head h2 { font-family:'Playfair Display',serif; font-size:clamp(1.6rem,3vw,2.4rem); margin-bottom:.5rem; }
+    .section-head p { color:var(--gray); font-size:.9rem; }
+
+    .categories { display:grid; grid-template-columns:repeat(3,1fr); gap:1.2rem; }
+    .cat-card { border-radius:20px; overflow:hidden; position:relative; cursor:pointer; transition:transform .3s; }
+    .cat-card:hover { transform:translateY(-6px); }
+    .cat-bg { height:220px; display:flex; align-items:center; justify-content:center; font-size:5rem; }
+    .cat-bg.men { background:linear-gradient(135deg,#e8d5f5,#c9aee8); }
+    .cat-bg.women { background:linear-gradient(135deg,var(--pink-light),var(--pink)); }
+    .cat-bg.kids { background:linear-gradient(135deg,#d5f0e8,#a8ddc5); }
+    .cat-bg.bags { background:linear-gradient(135deg,#fef3c7,#fde68a); }
+    .cat-bg.cosmetics { background:linear-gradient(135deg,#fce7f3,#fbcfe8); }
+    .cat-bg.toys { background:linear-gradient(135deg,#dbeafe,#bfdbfe); }
+    .cat-label { position:absolute; bottom:1rem; left:50%; transform:translateX(-50%); background:rgba(255,255,255,.92); border-radius:50px; padding:.4rem 1.2rem; font-weight:500; font-size:.85rem; white-space:nowrap; }
+
+    /* PRODUCTS */
+    .products-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; }
+    .prod-card { border-radius:16px; overflow:hidden; background:var(--gray-light); transition:transform .3s,box-shadow .3s; cursor:pointer; position:relative; }
+    .prod-card:hover { transform:translateY(-5px); box-shadow:0 12px 32px rgba(0,0,0,.1); }
+    .prod-img { height:200px; display:flex; align-items:center; justify-content:center; font-size:4rem; background:linear-gradient(135deg,var(--pink-soft),var(--pink-light)); position:relative; overflow:hidden; }
+    .prod-img img { width:100%; height:100%; object-fit:cover; position:absolute; inset:0; }
+    .prod-img .emoji-fallback { position:relative; z-index:1; }
+    .prod-badge { position:absolute; top:8px; left:8px; background:var(--pink-deep); color:#fff; border-radius:50px; padding:.18rem .55rem; font-size:.68rem; font-weight:600; z-index:2; }
+    .badge-sale { background:#e74c3c; }
+    .badge-new { background:#27ae60; }
+    .prod-wish { position:absolute; top:8px; right:8px; background:#fff; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:.85rem; box-shadow:0 2px 8px rgba(0,0,0,.1); transition:transform .2s; z-index:2; }
+    .prod-wish:hover { transform:scale(1.2); }
+    .prod-info { padding:.8rem; }
+    .prod-name { font-weight:600; font-size:.84rem; margin-bottom:.2rem; }
+    .prod-cat { color:var(--gray); font-size:.72rem; margin-bottom:.3rem; }
+    .prod-delivery { color:var(--blue); font-size:.7rem; margin-bottom:.4rem; }
+    .prod-footer { display:flex; align-items:center; justify-content:space-between; }
+    .prod-price { font-weight:700; color:var(--pink-deep); font-size:.9rem; }
+    .prod-add { background:var(--pink-deep); color:#fff; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+    .prod-add:hover { background:#c45570; transform:scale(1.1); }
+
+    /* BANNER */
+    .banner { margin:0 5%; border-radius:24px; background:linear-gradient(135deg,var(--pink-deep),#c45570); padding:3rem 5%; display:flex; align-items:center; justify-content:space-between; position:relative; overflow:hidden; }
+    .banner::before { content:''; position:absolute; top:-60px; right:-60px; width:250px; height:250px; background:rgba(255,255,255,.1); border-radius:50%; }
+    .banner-text { color:#fff; }
+    .banner-text h2 { font-family:'Playfair Display',serif; font-size:clamp(1.4rem,2.5vw,2rem); margin-bottom:.6rem; }
+    .banner-text p { opacity:.85; font-size:.9rem; margin-bottom:1.2rem; }
+    .btn-white { background:#fff; color:var(--pink-deep); padding:.75rem 1.8rem; border-radius:50px; border:none; font-family:'DM Sans',sans-serif; font-weight:600; cursor:pointer; font-size:.88rem; }
+    .banner-emoji { font-size:5rem; animation:float 3s ease-in-out infinite; }
+
+    /* FOOTER */
+    footer { background:var(--dark); color:rgba(255,255,255,.7); padding:3rem 5% 2rem; margin-top:4rem; }
+    .footer-grid { display:grid; grid-template-columns:2fr 1fr 1fr; gap:2rem; margin-bottom:2rem; }
+    .footer-logo { font-family:'Playfair Display',serif; font-size:1.4rem; color:#fff; margin-bottom:.6rem; }
+    .footer-logo span { font-style:italic; color:var(--pink); }
+    .footer-col h4 { color:#fff; font-size:.88rem; margin-bottom:.8rem; }
+    .footer-col ul { list-style:none; }
+    .footer-col li { margin-bottom:.4rem; font-size:.82rem; cursor:pointer; }
+    .footer-col li:hover { color:var(--pink); }
+    .footer-bottom { border-top:1px solid rgba(255,255,255,.1); padding-top:1.2rem; display:flex; justify-content:space-between; font-size:.78rem; }
+
+    /* CATALOG */
+    .catalog-wrap { margin-top:72px; display:grid; grid-template-columns:220px 1fr; }
+    .filter-sidebar { padding:1.5rem; border-right:1px solid var(--gray-light); position:sticky; top:72px; height:calc(100vh - 72px); overflow-y:auto; }
+    .filter-title { font-weight:700; font-size:.95rem; margin-bottom:1.2rem; display:flex; justify-content:space-between; }
+    .filter-clear { font-size:.75rem; color:var(--pink-deep); cursor:pointer; font-weight:400; }
+    .filter-group { margin-bottom:1.5rem; }
+    .filter-group-title { font-weight:600; font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--gray); margin-bottom:.8rem; }
+    .chips { display:flex; flex-wrap:wrap; gap:.4rem; }
+    .chip { padding:.35rem .8rem; border-radius:50px; border:1.5px solid var(--pink-light); background:var(--white); font-size:.78rem; cursor:pointer; transition:all .2s; font-family:'DM Sans',sans-serif; }
+    .chip.active { background:var(--pink-deep); border-color:var(--pink-deep); color:#fff; }
+    .catalog-main { padding:1.5rem; }
+    .search-bar { display:flex; gap:.8rem; margin-bottom:1.2rem; }
+    .search-input { flex:1; display:flex; align-items:center; gap:.6rem; background:var(--gray-light); border-radius:50px; padding:.6rem 1rem; }
+    .search-input input { border:none; background:none; outline:none; font-family:'DM Sans',sans-serif; font-size:.88rem; color:var(--dark); width:100%; }
+    .sort-sel { border:1.5px solid var(--pink-light); border-radius:50px; padding:.55rem 1rem; font-family:'DM Sans',sans-serif; font-size:.82rem; color:var(--dark); background:var(--white); outline:none; cursor:pointer; }
+    .catalog-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+    .pagination { display:flex; justify-content:center; gap:.4rem; margin-top:2rem; }
+    .page-btn { width:36px; height:36px; border-radius:50%; border:1.5px solid var(--pink-light); background:var(--white); cursor:pointer; font-family:'DM Sans',sans-serif; font-size:.82rem; }
+    .page-btn.active { background:var(--pink-deep); border-color:var(--pink-deep); color:#fff; }
+
+    /* ADMIN */
+    .admin-body { background:var(--surface); min-height:100vh; }
+    .login-wrap { display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .login-box { background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:2.5rem; width:360px; text-align:center; }
+    .login-logo { font-family:'Playfair Display',serif; font-size:1.6rem; color:var(--pink); margin-bottom:.3rem; }
+    .login-logo span { font-style:italic; }
+    .login-sub { color:var(--gray); font-size:.82rem; margin-bottom:1.8rem; }
+    .login-inp { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:.75rem 1rem; font-family:'DM Sans',sans-serif; font-size:.88rem; color:#f5eff2; outline:none; margin-bottom:.7rem; }
+    .login-inp:focus { border-color:var(--pink-deep); }
+    .login-inp::placeholder { color:var(--gray); }
+    .login-btn2 { width:100%; background:var(--pink-deep); color:#fff; border:none; border-radius:10px; padding:.85rem; font-family:'DM Sans',sans-serif; font-size:.92rem; font-weight:600; cursor:pointer; margin-top:.3rem; }
+    .login-err { color:var(--red); font-size:.78rem; margin-top:.4rem; min-height:1rem; }
+    .back-link { color:var(--pink); font-size:.78rem; cursor:pointer; margin-top:1rem; display:inline-block; }
+
+    .admin-layout { display:flex; }
+    .admin-sidebar { width:220px; background:var(--surface); border-right:1px solid var(--border); min-height:100vh; display:flex; flex-direction:column; position:fixed; top:0; bottom:0; z-index:50; overflow-y:auto; }
+    .admin-logo { padding:1.5rem; border-bottom:1px solid var(--border); font-family:'Playfair Display',serif; font-size:1.3rem; color:var(--pink); }
+    .admin-logo span { font-style:italic; }
+    .admin-logo small { display:block; font-family:'DM Sans',sans-serif; font-size:.65rem; color:var(--gray); margin-top:.2rem; text-transform:uppercase; letter-spacing:.1em; }
+    .admin-nav { flex:1; padding:1rem 0; }
+    .a-nav-item { display:flex; align-items:center; gap:.7rem; padding:.65rem 1.2rem; cursor:pointer; color:var(--gray); font-size:.84rem; font-weight:500; transition:all .2s; position:relative; border:none; background:none; width:100%; text-align:left; font-family:'DM Sans',sans-serif; }
+    .a-nav-item:hover { color:#f5eff2; background:var(--pink-glow); }
+    .a-nav-item.active { color:var(--pink); background:var(--pink-glow); }
+    .a-nav-item.active::before { content:''; position:absolute; left:0; top:20%; bottom:20%; width:3px; background:var(--pink-deep); border-radius:0 4px 4px 0; }
+    .a-badge { margin-left:auto; background:var(--pink-deep); color:#fff; border-radius:50px; padding:.1rem .45rem; font-size:.65rem; }
+    .admin-foot { padding:1rem 1.2rem; border-top:1px solid var(--border); }
+    .admin-profile { display:flex; align-items:center; gap:.7rem; }
+    .admin-avatar { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,var(--pink-deep),#c45570); display:flex; align-items:center; justify-content:center; font-size:.9rem; }
+
+    .admin-main { margin-left:220px; flex:1; }
+    .admin-topbar { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:40; }
+    .admin-topbar-title { font-size:1rem; font-weight:600; color:#f5eff2; }
+    .a-icon-btn { background:var(--surface2); border:1px solid var(--border); border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:.95rem; }
+    .admin-content { padding:1.5rem; }
+    .a-page { display:none; }
+    .a-page.active { display:block; animation:fadeIn .3s ease; }
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+    .a-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.5rem; }
+    .a-stat { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:1.2rem; }
+    .a-stat-icon { font-size:1.4rem; margin-bottom:.6rem; }
+    .a-stat-label { font-size:.7rem; color:var(--gray); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.2rem; }
+    .a-stat-val { font-size:1.6rem; font-weight:700; color:#f5eff2; }
+
+    .a-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:1.2rem; margin-bottom:1.2rem; }
+    .a-card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+    .a-card-title { font-size:.9rem; font-weight:600; color:#f5eff2; }
+
+    table { width:100%; border-collapse:collapse; font-size:.82rem; }
+    th { text-align:left; padding:.55rem .7rem; color:var(--gray); font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; border-bottom:1px solid var(--border); font-weight:600; }
+    td { padding:.65rem .7rem; border-bottom:1px solid rgba(244,167,185,.05); vertical-align:middle; color:#f5eff2; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:var(--pink-glow); }
+    .a-thumb { width:40px; height:40px; border-radius:8px; object-fit:cover; display:inline-block; vertical-align:middle; margin-right:.5rem; background:var(--surface2); }
+    .a-thumb-emoji { width:40px; height:40px; border-radius:8px; background:var(--surface2); display:inline-flex; align-items:center; justify-content:center; font-size:1.3rem; vertical-align:middle; margin-right:.5rem; }
+    .a-chip { display:inline-block; padding:.18rem .55rem; border-radius:50px; font-size:.68rem; font-weight:600; }
+    .chip-green{background:rgba(74,222,128,.15);color:var(--green)} .chip-yellow{background:rgba(251,191,36,.15);color:var(--yellow)} .chip-red{background:rgba(248,113,113,.15);color:var(--red)} .chip-pink{background:var(--pink-glow);color:var(--pink)} .chip-blue{background:rgba(96,165,250,.15);color:var(--blue)}
+    .act-btns { display:flex; gap:.3rem; }
+    .act-btn { background:var(--surface2); border:1px solid var(--border); border-radius:6px; width:28px; height:28px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:.8rem; }
+    .act-btn:hover { background:var(--pink-glow); border-color:var(--pink); }
+    .act-btn.del:hover { background:rgba(248,113,113,.15); border-color:var(--red); }
+
+    /* FORM */
+    .a-form { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; }
+    .a-fg { display:flex; flex-direction:column; gap:.3rem; }
+    .a-fg.full { grid-column:1/-1; }
+    .a-lbl { font-size:.72rem; color:var(--gray); text-transform:uppercase; letter-spacing:.06em; }
+    .a-inp,.a-sel,.a-ta { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:.65rem .9rem; font-family:'DM Sans',sans-serif; font-size:.85rem; color:#f5eff2; outline:none; width:100%; }
+    .a-inp:focus,.a-sel:focus,.a-ta:focus { border-color:var(--pink-deep); }
+    .a-inp::placeholder,.a-ta::placeholder { color:var(--gray); }
+    .a-sel option { background:var(--surface2); }
+    .a-ta { resize:vertical; min-height:80px; }
+    .a-btn { background:var(--pink-deep); color:#fff; border:none; border-radius:8px; padding:.7rem 1.5rem; font-family:'DM Sans',sans-serif; font-size:.88rem; font-weight:600; cursor:pointer; }
+    .a-btn:hover { background:#c45570; }
+    .a-btn-g { background:transparent; color:var(--gray); border:1px solid var(--border); border-radius:8px; padding:.7rem 1.5rem; font-family:'DM Sans',sans-serif; font-size:.88rem; cursor:pointer; }
+    .a-btn-g:hover { border-color:var(--pink); color:var(--pink); }
+
+    /* IMAGE UPLOAD */
+    .img-upload-area { border:2px dashed var(--border); border-radius:12px; padding:1.5rem; text-align:center; cursor:pointer; transition:all .2s; position:relative; }
+    .img-upload-area:hover { border-color:var(--pink-deep); background:var(--pink-glow); }
+    .img-upload-area input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+    .img-preview { width:100%; height:150px; object-fit:cover; border-radius:8px; margin-top:.8rem; display:none; }
+    .img-preview.show { display:block; }
+    .img-upload-text { color:var(--gray); font-size:.85rem; }
+    .img-upload-icon { font-size:2rem; margin-bottom:.5rem; display:block; }
+    .upload-progress { display:none; margin-top:.5rem; }
+    .upload-progress.show { display:block; }
+    .progress-bar { height:4px; background:var(--surface2); border-radius:4px; overflow:hidden; margin-top:.3rem; }
+    .progress-fill { height:100%; background:var(--pink-deep); border-radius:4px; width:0%; transition:width .3s; }
+
+    /* SETTINGS */
+    .settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+
+    /* MODAL */
+    .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:200; display:none; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+    .modal-bg.open { display:flex; }
+    .modal-box { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:1.8rem; width:540px; max-width:95vw; max-height:90vh; overflow-y:auto; }
+    .modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem; }
+    .modal-title { font-family:'Playfair Display',serif; font-size:1.2rem; color:#f5eff2; }
+    .modal-close { background:none; border:none; color:var(--gray); font-size:1.2rem; cursor:pointer; }
+
+    /* CART */
+    .cart-bg { position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:200; opacity:0; pointer-events:none; transition:opacity .3s; }
+    .cart-bg.open { opacity:1; pointer-events:all; }
+    .cart-side { position:fixed; top:0; right:-380px; bottom:0; width:340px; background:#fff; z-index:201; padding:1.5rem; transition:right .35s; display:flex; flex-direction:column; box-shadow:-8px 0 40px rgba(0,0,0,.12); }
+    .cart-side.open { right:0; }
+    .cart-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+    .cart-head h3 { font-family:'Playfair Display',serif; font-size:1.2rem; }
+    .cart-close { background:none; border:none; font-size:1.2rem; cursor:pointer; }
+    .cart-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--gray); gap:.8rem; }
+    .cart-item { display:flex; gap:.8rem; padding:.7rem 0; border-bottom:1px solid var(--pink-light); }
+    .cart-img { width:50px; height:50px; border-radius:8px; background:var(--pink-light); display:flex; align-items:center; justify-content:center; font-size:1.5rem; overflow:hidden; flex-shrink:0; }
+    .cart-img img { width:100%; height:100%; object-fit:cover; }
+    .cart-info { flex:1; }
+    .cart-name { font-weight:500; font-size:.82rem; }
+    .cart-price { color:var(--pink-deep); font-weight:700; font-size:.82rem; }
+    .cart-rm { background:none; border:none; cursor:pointer; color:var(--gray); }
+    .cart-foot { margin-top:auto; padding-top:1rem; border-top:1px solid var(--pink-light); }
+    .cart-total { display:flex; justify-content:space-between; font-weight:700; margin-bottom:.8rem; }
+    .btn-order { width:100%; background:var(--pink-deep); color:#fff; border:none; border-radius:50px; padding:.85rem; font-family:'DM Sans',sans-serif; font-size:.9rem; font-weight:500; cursor:pointer; }
+
+    /* TOAST */
+    .toast { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%) translateY(80px); background:var(--dark); color:#fff; padding:.7rem 1.3rem; border-radius:50px; font-size:.82rem; z-index:400; transition:transform .4s; white-space:nowrap; max-width:90vw; text-align:center; }
+    .toast.show { transform:translateX(-50%) translateY(0); }
+    .loading { display:flex; align-items:center; justify-content:center; padding:2rem; color:var(--gray); gap:.6rem; }
+    .spinner { width:20px; height:20px; border:2px solid rgba(244,167,185,.3); border-top-color:var(--pink-deep); border-radius:50%; animation:spin .8s linear infinite; }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .empty-st { text-align:center; padding:2.5rem; color:var(--gray); }
+
+    /* PAYMENT INFO */
+    .payment-info { background:var(--pink-soft); border:1px solid var(--pink-light); border-radius:12px; padding:1.2rem; margin-bottom:1rem; }
+    .payment-info h4 { color:var(--dark); font-size:.9rem; margin-bottom:.5rem; }
+    .payment-info p { color:var(--gray); font-size:.82rem; line-height:1.6; }
+    .card-number { font-family:monospace; font-size:1rem; font-weight:700; color:var(--dark); background:#fff; padding:.5rem 1rem; border-radius:8px; display:inline-block; margin:.5rem 0; letter-spacing:.1em; }
+
+    @media(max-width:900px){
+      .hero { grid-template-columns:1fr; text-align:center; padding-top:7rem; }
+      .hero-image { margin-top:1.5rem; }
+      .hero-img-wrap { width:240px; height:300px; }
+      .categories { grid-template-columns:repeat(2,1fr); }
+      .catalog-wrap { grid-template-columns:1fr; }
+      .filter-sidebar { display:none; }
+      .products-grid,.catalog-grid { grid-template-columns:repeat(2,1fr); }
+      .footer-grid { grid-template-columns:1fr; }
+      .banner { flex-direction:column; text-align:center; gap:1.5rem; }
+      .nav-links { display:none; }
+      .a-stats { grid-template-columns:repeat(2,1fr); }
+      .admin-sidebar { display:none; }
+      .admin-main { margin-left:0; }
+      .settings-grid { grid-template-columns:1fr; }
+    }
+  
+    /* BONUS PAGE */
+    .bonus-wrap { max-width:960px; margin:0 auto; padding:2rem 1.5rem; }
+    .bonus-hero { background:linear-gradient(135deg,#f59e0b,#d97706); border-radius:24px; padding:2rem; color:#fff; margin-bottom:1.5rem; position:relative; overflow:hidden; }
+    .bonus-hero::before { content:''; position:absolute; top:-50px; right:-50px; width:220px; height:220px; background:rgba(255,255,255,.1); border-radius:50%; }
+    .bonus-hero h2 { font-family:'Playfair Display',serif; font-size:1.8rem; margin-bottom:.4rem; }
+    .bonus-hero p { opacity:.9; font-size:.9rem; }
+    .bonus-points-big { font-size:3.5rem; font-weight:700; margin:.5rem 0; }
+    .bonus-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; margin-bottom:1.5rem; }
+    .bonus-card { background:#fff; border-radius:20px; padding:1.5rem; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+    .bonus-card-title { font-family:'Playfair Display',serif; font-size:1.1rem; margin-bottom:1.2rem; }
+    .referral-link-box { background:var(--gray-light); border-radius:12px; padding:1rem; display:flex; align-items:center; justify-content:space-between; gap:.8rem; margin-bottom:1rem; }
+    .referral-link-text { font-size:.78rem; color:var(--dark); font-family:monospace; word-break:break-all; flex:1; }
+    .copy-btn { background:var(--pink-deep); color:#fff; border:none; border-radius:8px; padding:.5rem 1rem; font-family:'DM Sans',sans-serif; font-size:.78rem; font-weight:600; cursor:pointer; white-space:nowrap; }
+    .ref-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:.8rem; }
+    .ref-stat { background:var(--pink-soft); border-radius:12px; padding:.8rem; text-align:center; }
+    .ref-stat-num { font-size:1.4rem; font-weight:700; color:var(--pink-deep); }
+    .ref-stat-lbl { font-size:.7rem; color:var(--gray); margin-top:.2rem; }
+    .bh-item { display:flex; align-items:center; justify-content:space-between; padding:.7rem 0; border-bottom:1px solid var(--gray-light); }
+    .bh-item:last-child { border-bottom:none; }
+    .bh-icon { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+    .bh-plus { background:rgba(74,222,128,.15); }
+    .bh-minus { background:rgba(248,113,113,.15); }
+    .bh-info { flex:1; margin:0 .8rem; }
+    .bh-title { font-size:.85rem; font-weight:500; }
+    .bh-date { font-size:.72rem; color:var(--gray); }
+    .bh-pts { font-weight:700; font-size:.9rem; }
+    .bh-pts.plus { color:var(--green); }
+    .bh-pts.minus { color:var(--red); }
+    .gift-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+    .gift-card { background:#fff; border-radius:16px; padding:1.2rem; text-align:center; box-shadow:0 2px 12px rgba(0,0,0,.06); border:2px solid transparent; transition:all .2s; }
+    .gift-card:hover:not(.locked) { border-color:var(--pink-deep); transform:translateY(-3px); }
+    .gift-card.locked { opacity:.55; }
+    .gift-emoji { font-size:2.5rem; margin-bottom:.5rem; }
+    .gift-name { font-weight:600; font-size:.88rem; margin-bottom:.3rem; }
+    .gift-pts { font-size:.78rem; color:var(--pink-deep); font-weight:700; }
+    .gift-btn { background:var(--pink-deep); color:#fff; border:none; border-radius:8px; padding:.45rem 1rem; font-family:'DM Sans',sans-serif; font-size:.78rem; font-weight:600; cursor:pointer; margin-top:.6rem; width:100%; }
+    .gift-btn:disabled { background:var(--gray); cursor:not-allowed; }
+    @media(max-width:700px){ .bonus-grid,.gift-grid { grid-template-columns:1fr; } .ref-stats { grid-template-columns:repeat(3,1fr); } }
+    /* NEW ADMIN STYLES */
+    .adm-nav { display:flex; align-items:center; gap:.8rem; padding:.7rem 1.2rem; cursor:pointer; color:rgba(245,239,242,.6); font-size:.84rem; font-weight:500; border:none; background:none; width:100%; text-align:left; font-family:'DM Sans',sans-serif; transition:all .2s; position:relative; border-radius:0; }
+    .adm-nav:hover { color:#f5eff2; background:rgba(244,167,185,.08); }
+    .adm-nav.active { color:var(--pink); background:rgba(244,167,185,.12); }
+    .adm-nav.active::before { content:''; position:absolute; left:0; top:15%; bottom:15%; width:3px; background:var(--pink-deep); border-radius:0 3px 3px 0; }
+    .adm-nav-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:.95rem; flex-shrink:0; }
+    .adm-nav-badge { margin-left:auto; background:var(--pink-deep); color:#fff; border-radius:50px; padding:.1rem .5rem; font-size:.65rem; font-weight:700; }
+    .adm-nav-arrow { margin-left:auto; color:rgba(245,239,242,.3); font-size:.9rem; }
+    .adm-stat-card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:1.3rem; position:relative; overflow:hidden; transition:all .2s; }
+    .adm-stat-card:hover { background:rgba(255,255,255,.07); transform:translateY(-2px); }
+    .adm-stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--accent,var(--pink-deep)); }
+    .adm-stat-lbl { font-size:.7rem; color:rgba(245,239,242,.5); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.3rem; }
+    .adm-stat-num { font-size:2rem; font-weight:700; color:#f5eff2; margin-bottom:.2rem; }
+    .adm-stat-sub { font-size:.72rem; color:rgba(245,239,242,.4); }
+    .adm-stat-icon { font-size:1.8rem; opacity:.6; }
+    .adm-card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:1.2rem; margin-bottom:1rem; }
+    .adm-card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+    .adm-card-title { font-size:.9rem; font-weight:600; color:#f5eff2; }
+    .adm-card-act { font-size:.75rem; color:var(--pink); cursor:pointer; }
+    .adm-btn { background:linear-gradient(135deg,var(--pink-deep),#c45570); color:#fff; border:none; border-radius:10px; padding:.7rem 1.5rem; font-family:'DM Sans',sans-serif; font-size:.88rem; font-weight:600; cursor:pointer; transition:all .2s; box-shadow:0 4px 16px rgba(224,122,149,.3); }
+    .adm-btn:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(224,122,149,.4); }
+    .chart-bar { border-radius:4px 4px 0 0; background:linear-gradient(to top,var(--pink-deep),var(--pink)); flex:1; transition:all .3s; cursor:pointer; position:relative; min-height:4px; }
+    .chart-bar:hover { opacity:.8; }
+    /* TABLE */
+    .adm-table { width:100%; border-collapse:collapse; font-size:.82rem; }
+    .adm-table th { text-align:left; padding:.55rem .8rem; color:rgba(245,239,242,.4); font-size:.67rem; text-transform:uppercase; letter-spacing:.06em; border-bottom:1px solid rgba(255,255,255,.06); font-weight:600; }
+    .adm-table td { padding:.7rem .8rem; border-bottom:1px solid rgba(255,255,255,.03); vertical-align:middle; color:#f5eff2; }
+    .adm-table tr:last-child td { border-bottom:none; }
+    .adm-table tr:hover td { background:rgba(244,167,185,.04); }
+    .adm-thumb { width:40px; height:40px; border-radius:10px; object-fit:cover; display:inline-block; vertical-align:middle; margin-right:.5rem; background:rgba(255,255,255,.08); }
+    .adm-thumb-e { width:40px; height:40px; border-radius:10px; background:rgba(255,255,255,.08); display:inline-flex; align-items:center; justify-content:center; font-size:1.3rem; vertical-align:middle; margin-right:.5rem; }
+    .adm-chip { display:inline-block; padding:.2rem .6rem; border-radius:50px; font-size:.68rem; font-weight:600; }
+    .adm-act { display:flex; gap:.3rem; }
+    .adm-act-btn { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); border-radius:8px; width:30px; height:30px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:.8rem; transition:all .2s; }
+    .adm-act-btn:hover { background:rgba(244,167,185,.15); border-color:var(--pink); }
+    .adm-act-btn.del:hover { background:rgba(248,113,113,.15); border-color:var(--red); }
+    /* SIDEBAR TOGGLE */
+    @media(min-width:1024px){
+      #adminSidebar { left:0 !important; }
+      #adminMain { margin-left:260px !important; }
+      #sideOverlay { display:none !important; }
+    }
+    /* PROFILE PAGE */
+    .prof-wrap { max-width:900px; margin:0 auto; padding:2rem 1.5rem; }
+    .prof-auth { display:flex; align-items:center; justify-content:center; min-height:calc(100vh - 80px); }
+    .prof-auth-box { background:#fff; border-radius:24px; padding:2.5rem; width:100%; max-width:400px; box-shadow:0 20px 60px rgba(224,122,149,.15); }
+    .p-auth-logo { font-family:'Playfair Display',serif; font-size:1.6rem; color:var(--pink-deep); margin-bottom:.3rem; }
+    .p-auth-logo span { font-style:italic; }
+    .p-tabs { display:flex; gap:0; margin:1.2rem 0; background:var(--gray-light); border-radius:12px; padding:4px; }
+    .p-tab { flex:1; padding:.55rem; border:none; background:none; border-radius:8px; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:.85rem; font-weight:500; color:var(--gray); transition:all .2s; }
+    .p-tab.active { background:#fff; color:var(--pink-deep); box-shadow:0 2px 8px rgba(0,0,0,.08); }
+    .p-form { display:flex; flex-direction:column; gap:.8rem; }
+    .p-inp2 { border:1.5px solid var(--pink-light); border-radius:10px; padding:.7rem 1rem; font-family:'DM Sans',sans-serif; font-size:.88rem; color:var(--dark); outline:none; transition:border-color .2s; }
+    .p-inp2:focus { border-color:var(--pink-deep); }
+    .p-inp2::placeholder { color:var(--gray); }
+    .p-auth-btn { background:var(--pink-deep); color:#fff; border:none; border-radius:10px; padding:.82rem; font-family:'DM Sans',sans-serif; font-size:.9rem; font-weight:600; cursor:pointer; }
+    .p-err { color:var(--red); font-size:.78rem; min-height:1rem; }
+    .p-header { background:linear-gradient(135deg,var(--pink-deep),#c45570); border-radius:24px; padding:2rem; display:flex; align-items:center; gap:1.5rem; margin-bottom:1.5rem; position:relative; overflow:hidden; }
+    .p-header::before { content:''; position:absolute; top:-40px; right:-40px; width:200px; height:200px; background:rgba(255,255,255,.1); border-radius:50%; }
+    .p-avatar-wrap { position:relative; flex-shrink:0; }
+    .p-avatar { width:85px; height:85px; border-radius:50%; background:rgba(255,255,255,.2); border:3px solid rgba(255,255,255,.5); display:flex; align-items:center; justify-content:center; font-size:2.2rem; overflow:hidden; cursor:pointer; }
+    .p-avatar img { width:100%; height:100%; object-fit:cover; }
+    .p-avatar-edit { position:absolute; bottom:0; right:0; width:26px; height:26px; background:#fff; border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:.75rem; box-shadow:0 2px 8px rgba(0,0,0,.2); }
+    .p-info { flex:1; color:#fff; }
+    .p-name { font-family:'Playfair Display',serif; font-size:1.5rem; margin-bottom:.3rem; }
+    .p-email-txt { opacity:.8; font-size:.82rem; margin-bottom:.6rem; }
+    .p-bdgs { display:flex; gap:.5rem; flex-wrap:wrap; }
+    .p-bdg { background:rgba(255,255,255,.2); color:#fff; border-radius:50px; padding:.2rem .7rem; font-size:.72rem; font-weight:500; }
+    .p-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem; }
+    .p-stat { background:#fff; border-radius:16px; padding:1.2rem; text-align:center; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+    .p-stat-num { font-size:1.7rem; font-weight:700; color:var(--pink-deep); }
+    .p-stat-lbl { font-size:.72rem; color:var(--gray); margin-top:.2rem; }
+    .p-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+    .p-card { background:#fff; border-radius:20px; padding:1.5rem; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+    .p-card-title { font-family:'Playfair Display',serif; font-size:1.1rem; margin-bottom:1.2rem; }
+    .p-fg { margin-bottom:.9rem; }
+    .p-lbl { font-size:.72rem; color:var(--gray); font-weight:600; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.35rem; display:block; }
+    .p-finp { width:100%; border:1.5px solid var(--pink-light); border-radius:10px; padding:.62rem .9rem; font-family:'DM Sans',sans-serif; font-size:.87rem; color:var(--dark); outline:none; transition:border-color .2s; }
+    .p-finp:focus { border-color:var(--pink-deep); }
+    .p-finp::placeholder { color:var(--gray); }
+    .p-save-btn { background:var(--pink-deep); color:#fff; border:none; border-radius:10px; padding:.7rem 1.5rem; font-family:'DM Sans',sans-serif; font-size:.87rem; font-weight:600; cursor:pointer; width:100%; margin-top:.3rem; }
+    .p-logout-btn { background:none; border:1.5px solid var(--red); color:var(--red); border-radius:10px; padding:.7rem 1.5rem; font-family:'DM Sans',sans-serif; font-size:.87rem; cursor:pointer; width:100%; margin-top:.8rem; }
+    .p-order-card { border:1px solid var(--pink-light); border-radius:14px; padding:1rem; margin-bottom:.8rem; }
+    .p-order-card:hover { border-color:var(--pink-deep); }
+    .p-bd-alert { background:linear-gradient(135deg,#fef3c7,#fde68a); border-radius:16px; padding:1.2rem; margin-bottom:1.2rem; display:flex; align-items:center; gap:1rem; }
+    .p-bd-btn { background:#f59e0b; color:#fff; border:none; border-radius:8px; padding:.45rem 1rem; font-family:'DM Sans',sans-serif; font-size:.8rem; font-weight:600; cursor:pointer; margin-top:.4rem; }
+    .o-st { font-size:.7rem; font-weight:600; padding:.2rem .65rem; border-radius:50px; }
+    .ost-new{background:rgba(96,165,250,.1);color:var(--blue)} .ost-payment_pending{background:rgba(245,158,11,.1);color:#f59e0b} .ost-payment_confirmed{background:rgba(74,222,128,.1);color:var(--green)} .ost-shipped{background:rgba(244,167,185,.15);color:var(--pink-deep)} .ost-done{background:rgba(74,222,128,.1);color:var(--green)} .ost-cancelled{background:rgba(248,113,113,.1);color:var(--red)}
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <div class="nav-logo" onclick="goPage('home')"><span>Style</span> Shop</div>
+  <ul class="nav-links">
+    <li><a onclick="goPage('home')">Bosh sahifa</a></li>
+    <li><a onclick="goPage('catalog')">Katalog</a></li>
+    <li><a onclick="goPage('catalog');setCat('Erkaklar')">Erkaklar</a></li>
+    <li><a onclick="goPage('catalog');setCat('Ayollar')">Ayollar</a></li>
+    <li><a onclick="goPage('catalog');setCat('Bolalar')">Bolalar</a></li>
+    <li><a onclick="goPage('bonus')">⭐ Bonuslar</a></li>
+  </ul>
+  <div class="nav-icons">
+    <button onclick="toggleCart()">🛒<span class="cart-badge" id="cartCount">0</span></button>
+    <button onclick="goPage('profile')" title="Profilim">👤</button>
+    <button onclick="goPage('bonus')" title="Bonuslar">⭐</button>
+    <button onclick="goPage('admin')" title="Admin">👑</button>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <section class="hero">
+    <div>
+      <span class="hero-badge">✨ Yangi kolleksiya 2025</span>
+      <h1>Zamonaviy <em>uslub</em> — sizning tanlovingiz</h1>
+      <p>Erkaklar, ayollar va bolalar uchun eng yangi moda kiyimlari.</p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="goPage('catalog')">Xarid qilish →</button>
+        <button class="btn-secondary" onclick="goPage('catalog')">Kolleksiya</button>
+      </div>
+    </div>
+    <div class="hero-image">
+      <div class="hero-img-wrap">👗</div>
+      <div class="floating-card card-top"><div class="card-dot" style="background:#4CAF50"></div><span id="heroProdCount">0 Mahsulot</span></div>
+      <div class="floating-card card-bottom"><div class="card-dot" style="background:var(--pink-deep)"></div><span>Tez yetkazib berish 🚚</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Kategoriyalar</h2><p>Kerakli toifani tanlang</p></div>
+    <div class="categories">
+      <div class="cat-card" onclick="goPage('catalog');setCat('Erkaklar')"><div class="cat-bg men">👔</div><span class="cat-label">👔 Erkaklar</span></div>
+      <div class="cat-card" onclick="goPage('catalog');setCat('Ayollar')"><div class="cat-bg women">👗</div><span class="cat-label">👗 Ayollar</span></div>
+      <div class="cat-card" onclick="goPage('catalog');setCat('Bolalar')"><div class="cat-bg kids">🧒</div><span class="cat-label">🧒 Bolalar</span></div>
+      <div class="cat-card" onclick="goPage('catalog');setCat('Sumkalar')"><div class="cat-bg bags">👜</div><span class="cat-label">👜 Sumkalar</span></div>
+      <div class="cat-card" onclick="goPage('catalog');setCat('Kosmetika')"><div class="cat-bg cosmetics">💄</div><span class="cat-label">💄 Kosmetika</span></div>
+      <div class="cat-card" onclick="goPage('catalog');setCat('O\'yinchoqlar')"><div class="cat-bg toys">🧸</div><span class="cat-label">🧸 O'yinchoqlar</span></div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="section-head"><h2>Mashhur mahsulotlar</h2><p>Eng ko'p tanlangan</p></div>
+    <div class="products-grid" id="homeProds"><div class="loading" style="grid-column:1/-1"><div class="spinner"></div> Yuklanmoqda...</div></div>
+  </section>
+
+  <div class="banner">
+    <div class="banner-text">
+      <h2>Do'stingizni taklif qiling!</h2>
+      <p>Havolangizni ulashing va chegirma qo'lga kiriting.</p>
+      <button class="btn-white" onclick="shareLink()">🔗 Havolani ulashish</button>
+    </div>
+    <div class="banner-emoji">🎁</div>
+  </div>
+
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <div class="footer-logo"><span>Style</span> Shop</div>
+        <p style="font-size:.82rem;line-height:1.7" id="footerDesc">Zamonaviy kiyim-kechak do'koni.</p>
+        <p style="font-size:.82rem;margin-top:.5rem" id="footerPhone">📞 +998 90 000 00 00</p>
+        <p style="font-size:.82rem" id="footerEmail">✉️ info@styleshop.uz</p>
+      </div>
+      <div class="footer-col"><h4>Do'kon</h4><ul>
+        <li onclick="goPage('catalog');setCat('Erkaklar')">Erkaklar</li>
+        <li onclick="goPage('catalog');setCat('Ayollar')">Ayollar</li>
+        <li onclick="goPage('catalog');setCat('Bolalar')">Bolalar</li>
+        <li onclick="goPage('catalog');setCat('Sumkalar')">Sumkalar</li>
+        <li onclick="goPage('catalog');setCat('Kosmetika')">Kosmetika</li>
+      </ul></div>
+      <div class="footer-col"><h4>Aloqa</h4><ul>
+        <li id="ftTelegram">Telegram</li>
+        <li id="ftInstagram">Instagram</li>
+        <li id="ftPhone2">+998 90 000 00 00</li>
+      </ul></div>
+    </div>
+    <div class="footer-bottom"><span>© 2025 Style Shop</span><span>Made with ❤️</span></div>
+  </footer>
+</div>
+
+<!-- CATALOG -->
+<div class="page" id="page-catalog">
+  <div class="catalog-wrap">
+    <aside class="filter-sidebar">
+      <div class="filter-title">Filterlar <span class="filter-clear" onclick="clearF()">Tozalash</span></div>
+      <div class="filter-group">
+        <div class="filter-group-title">Kategoriya</div>
+        <div class="chips" id="catChips">
+          <button class="chip active" onclick="setCatChip(this,'all')">Hammasi</button>
+          <button class="chip" onclick="setCatChip(this,'Erkaklar')">👔 Erkaklar</button>
+          <button class="chip" onclick="setCatChip(this,'Ayollar')">👗 Ayollar</button>
+          <button class="chip" onclick="setCatChip(this,'Bolalar')">🧒 Bolalar</button>
+          <button class="chip" onclick="setCatChip(this,'Sumkalar')">👜 Sumkalar</button>
+          <button class="chip" onclick="setCatChip(this,'Kosmetika')">💄 Kosmetika</button>
+          <button class="chip" onclick="setCatChip(this,'O\'yinchoqlar')">🧸 O'yinchoqlar</button>
+        </div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-group-title">Narx oralig'i</div>
+        <div style="display:flex;gap:.6rem;align-items:center">
+          <input style="flex:1;border:1.5px solid var(--pink-light);border-radius:8px;padding:.4rem .6rem;font-size:.8rem;outline:none" type="number" id="pMin" value="0" oninput="renderCat()"/>
+          <span style="color:var(--gray)">—</span>
+          <input style="flex:1;border:1.5px solid var(--pink-light);border-radius:8px;padding:.4rem .6rem;font-size:.8rem;outline:none" type="number" id="pMax" value="5000000" oninput="renderCat()"/>
+        </div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-group-title">Holat</div>
+        <div class="chips">
+          <button class="chip" onclick="this.classList.toggle('active');renderCat()" data-filter="new">✨ Yangi</button>
+          <button class="chip" onclick="this.classList.toggle('active');renderCat()" data-filter="sale">🔥 Sale</button>
+          <button class="chip" onclick="this.classList.toggle('active');renderCat()" data-filter="top">⭐ Top</button>
+        </div>
+      </div>
+    </aside>
+    <main class="catalog-main" style="margin-top:72px">
+      <div class="search-bar">
+        <div class="search-input"><span>🔍</span><input type="text" id="searchQ" placeholder="Qidirish..." oninput="renderCat()"/></div>
+        <select class="sort-sel" id="sortQ" onchange="renderCat()">
+          <option value="">Saralash</option>
+          <option value="asc">Narx ↑</option>
+          <option value="desc">Narx ↓</option>
+          <option value="stars">Reyting</option>
+        </select>
+      </div>
+      <div style="font-size:.82rem;color:var(--gray);margin-bottom:1rem"><span id="catCount">0</span> ta mahsulot</div>
+      <div class="catalog-grid" id="catProds"></div>
+      <div class="pagination" id="catPages"></div>
+    </main>
+  </div>
+</div>
+
+<!-- ══ BONUS ══ -->
+<div class="page" id="page-bonus">
+  <div style="margin-top:72px">
+    <div id="bonusLoginMsg" style="display:none">
+      <div style="text-align:center;padding:4rem 2rem;color:var(--gray)">
+        <span style="font-size:3rem;display:block;margin-bottom:1rem">⭐</span>
+        <h3 style="font-size:1.2rem;margin-bottom:.5rem;color:var(--dark)">Bonus tizimiga kirish</h3>
+        <p style="font-size:.88rem;margin-bottom:1.5rem">Ballar to'plash va sovg'alar olish uchun kiring</p>
+        <button style="background:var(--pink-deep);color:#fff;border:none;border-radius:50px;padding:.8rem 2rem;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer" onclick="goPage('profile')">Kirish / Ro'yxat →</button>
+      </div>
+    </div>
+    <div id="bonusContent" style="display:none">
+      <div class="bonus-wrap">
+        <!-- HERO -->
+        <div class="bonus-hero">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1">
+            <div>
+              <h2>⭐ Bonus tizimi</h2>
+              <p>Xarid qiling, do'stlarni taklif qiling — bal to'plang!</p>
+              <div class="bonus-points-big" id="bTotalPoints">0</div>
+              <div style="font-size:.85rem;opacity:.8">ta bal yig'ilgan</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:.8rem;opacity:.8;margin-bottom:.3rem">Darajangiz</div>
+              <div id="bLevel" style="font-size:1.4rem;font-weight:700">🥉 Yangi</div>
+              <div style="font-size:.75rem;opacity:.7;margin-top:.2rem" id="bLevelInfo">100 balga qadar</div>
+            </div>
+          </div>
+          <div style="margin-top:1.2rem;background:rgba(255,255,255,.2);border-radius:50px;height:8px;position:relative;z-index:1">
+            <div id="bProgressBar" style="height:100%;background:#fff;border-radius:50px;transition:width .5s;width:0%"></div>
+          </div>
+        </div>
+
+        <div class="bonus-grid">
+          <!-- REFERAL -->
+          <div class="bonus-card">
+            <div class="bonus-card-title">🔗 Referal havola</div>
+            <p style="font-size:.82rem;color:var(--gray);margin-bottom:1rem">Har bir do'st uchun <strong>50 bal</strong> oling!</p>
+            <div class="referral-link-box">
+              <span class="referral-link-text" id="bRefLink">Yuklanmoqda...</span>
+              <button class="copy-btn" onclick="bCopyRef()">📋 Nusxa</button>
+            </div>
+            <div class="ref-stats">
+              <div class="ref-stat"><div class="ref-stat-num" id="bRefCount">0</div><div class="ref-stat-lbl">Taklif qilingan</div></div>
+              <div class="ref-stat"><div class="ref-stat-num" id="bRefPoints">0</div><div class="ref-stat-lbl">Olingan bal</div></div>
+              <div class="ref-stat"><div class="ref-stat-num" id="bOrderPoints">0</div><div class="ref-stat-lbl">Xarid ballari</div></div>
+            </div>
+          </div>
+
+          <!-- BAL TARIXI -->
+          <div class="bonus-card">
+            <div class="bonus-card-title">📋 Bal tarixi</div>
+            <div id="bHistory"><div class="loading"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+
+        <!-- SOVG'ALAR DO'KONI -->
+        <div class="bonus-card" style="margin-bottom:1.5rem">
+          <div class="bonus-card-title">🎁 Sovg'alar do'koni</div>
+          <p style="font-size:.82rem;color:var(--gray);margin-bottom:1.2rem">To'plangan ballaringizni sovg'alarga almashtiring!</p>
+          <div class="gift-grid" id="bGiftGrid">
+            <div class="loading" style="grid-column:1/-1"><div class="spinner"></div></div>
+          </div>
+        </div>
+
+        <!-- QANDAY BAL TOPISH -->
+        <div class="bonus-card">
+          <div class="bonus-card-title">💡 Qanday bal topish mumkin?</div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem">
+            <div style="background:var(--pink-soft);border-radius:12px;padding:1rem;text-align:center">
+              <div style="font-size:2rem;margin-bottom:.4rem">🛒</div>
+              <div style="font-weight:600;font-size:.88rem">Xarid qilish</div>
+              <div style="font-size:.78rem;color:var(--gray);margin-top:.2rem">Har 10,000 so'm = 1 bal</div>
+            </div>
+            <div style="background:var(--pink-soft);border-radius:12px;padding:1rem;text-align:center">
+              <div style="font-size:2rem;margin-bottom:.4rem">👥</div>
+              <div style="font-weight:600;font-size:.88rem">Do'st taklif</div>
+              <div style="font-size:.78rem;color:var(--gray);margin-top:.2rem">Har do'st = 50 bal</div>
+            </div>
+            <div style="background:var(--pink-soft);border-radius:12px;padding:1rem;text-align:center">
+              <div style="font-size:2rem;margin-bottom:.4rem">🎂</div>
+              <div style="font-weight:600;font-size:.88rem">Tug'ilgan kun</div>
+              <div style="font-size:.78rem;color:var(--gray);margin-top:.2rem">100 bal sovg'a</div>
+            </div>
+            <div style="background:var(--pink-soft);border-radius:12px;padding:1rem;text-align:center">
+              <div style="font-size:2rem;margin-bottom:.4rem">⭐</div>
+              <div style="font-weight:600;font-size:.88rem">Birinchi xarid</div>
+              <div style="font-size:.78rem;color:var(--gray);margin-top:.2rem">20 bal bonus</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PROFILE ══ -->
+<div class="page" id="page-profile">
+  <div style="margin-top:72px">
+    <!-- AUTH -->
+    <div id="pAuthScreen" class="prof-auth">
+      <div class="prof-auth-box">
+        <div class="p-auth-logo"><span>Style</span> Shop</div>
+        <p style="color:var(--gray);font-size:.82rem;margin-bottom:.5rem">Profilingizga kiring yoki ro'yxatdan o'ting</p>
+        <div class="p-tabs">
+          <button class="p-tab active" onclick="pSwitchTab('login',this)">Kirish</button>
+          <button class="p-tab" onclick="pSwitchTab('register',this)">Ro'yxat</button>
+        </div>
+        <div id="pLoginForm" class="p-form">
+          <input class="p-inp2" type="email" id="pLEmail" placeholder="Email"/>
+          <input class="p-inp2" type="password" id="pLPass" placeholder="Parol"/>
+          <div class="p-err" id="pLErr"></div>
+          <button class="p-auth-btn" onclick="pDoLogin()">Kirish →</button>
+        </div>
+        <div id="pRegForm" class="p-form" style="display:none">
+          <input class="p-inp2" type="text" id="pRName" placeholder="Ism Familiya *"/>
+          <input class="p-inp2" type="email" id="pREmail" placeholder="Email *"/>
+          <input class="p-inp2" type="password" id="pRPass" placeholder="Parol (min 6) *"/>
+          <input class="p-inp2" type="tel" id="pRPhone" placeholder="Telefon *"/>
+          <div class="p-err" id="pRErr"></div>
+          <button class="p-auth-btn" onclick="pDoRegister()">Ro'yxatdan o'tish →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE CONTENT - Telegram style -->
+    <div id="pContent" style="display:none;background:var(--gray-light);min-height:100vh">
+
+      <!-- BIRTHDAY ALERT -->
+      <div class="p-bd-alert" id="pBdAlert" style="display:none;margin:0;border-radius:0">
+        <div style="font-size:2.2rem">🎂</div>
+        <div>
+          <h4 style="color:#92400e;font-size:.92rem;font-weight:700">Tug'ilgan kuningiz muborak!</h4>
+          <p style="color:#b45309;font-size:.8rem">Bugun sizga maxsus 15% chegirma!</p>
+          <button class="p-bd-btn" onclick="pCopyPromo()">🎁 Promo: BIRTHDAY15</button>
+        </div>
+      </div>
+
+      <!-- TG HEADER -->
+      <div style="background:linear-gradient(180deg,var(--pink-deep) 0%,#c45570 100%);padding:2.5rem 1.5rem 1.5rem;text-align:center;position:relative">
+        <!-- Avatar -->
+        <div style="position:relative;display:inline-block;margin-bottom:1rem">
+          <div id="pAvatar" onclick="document.getElementById('pAvatarFile').click()" style="width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.25);border:3px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:2.8rem;cursor:pointer;overflow:hidden;margin:0 auto">
+            <span id="pAvatarInitials" style="font-family:'Playfair Display',serif;font-size:2rem;color:#fff;font-weight:700">SS</span>
+          </div>
+          <button onclick="document.getElementById('pAvatarFile').click()" style="position:absolute;bottom:2px;right:2px;width:30px;height:30px;background:var(--pink-light);border:2px solid #fff;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem">📷</button>
+          <input type="file" id="pAvatarFile" accept="image/*" style="display:none" onchange="pUploadAvatar(this)"/>
+        </div>
+        <!-- Name & info -->
+        <div style="color:#fff;font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;margin-bottom:.3rem" id="pNameDisplay">—</div>
+        <div style="color:rgba(255,255,255,.8);font-size:.85rem;margin-bottom:.3rem" id="pEmailDisplay"></div>
+        <div style="color:rgba(255,255,255,.7);font-size:.8rem" id="pPhoneDisplay"></div>
+        <!-- Badge -->
+        <div style="margin-top:.8rem;display:flex;justify-content:center;gap:.5rem;flex-wrap:wrap">
+          <span style="background:rgba(255,255,255,.2);color:#fff;border-radius:50px;padding:.25rem .8rem;font-size:.72rem;font-weight:500">🛍️ Xaridor</span>
+          <span id="pBdBadge" style="display:none;background:rgba(255,215,0,.3);color:#fff;border-radius:50px;padding:.25rem .8rem;font-size:.72rem;font-weight:500">🎂 Bugun!</span>
+          <span id="pLevelBadge" style="background:rgba(255,255,255,.2);color:#fff;border-radius:50px;padding:.25rem .8rem;font-size:.72rem;font-weight:500">🥉 Yangi</span>
+        </div>
+      </div>
+
+      <!-- STATS ROW -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border-bottom:1px solid var(--pink-light)">
+        <div style="padding:1rem;text-align:center;border-right:1px solid var(--pink-light)">
+          <div style="font-size:1.5rem;font-weight:700;color:var(--pink-deep)" id="pSO">0</div>
+          <div style="font-size:.7rem;color:var(--gray)">Buyurtmalar</div>
+        </div>
+        <div style="padding:1rem;text-align:center;border-right:1px solid var(--pink-light)">
+          <div style="font-size:1.5rem;font-weight:700;color:var(--pink-deep)" id="pSS">0</div>
+          <div style="font-size:.7rem;color:var(--gray)">Sarflagan (K)</div>
+        </div>
+        <div style="padding:1rem;text-align:center">
+          <div style="font-size:1.5rem;font-weight:700;color:var(--pink-deep)" id="pTotalBal">0</div>
+          <div style="font-size:.7rem;color:var(--gray)">⭐ Ballar</div>
+        </div>
+      </div>
+
+      <!-- MENU SECTIONS - Telegram style -->
+      <div style="padding:1rem">
+
+        <!-- Hisobim -->
+        <div style="background:#fff;border-radius:16px;overflow:hidden;margin-bottom:1rem;box-shadow:0 1px 6px rgba(0,0,0,.06)">
+          <div style="padding:.8rem 1.2rem;border-bottom:1px solid var(--pink-light);font-size:.72rem;color:var(--pink-deep);font-weight:600;text-transform:uppercase;letter-spacing:.08em">Hisobim</div>
+
+          <div onclick="pOpenSection('info')" style="display:flex;align-items:center;gap:1rem;padding:1rem 1.2rem;cursor:pointer;border-bottom:1px solid rgba(244,167,185,.15)" onmouseover="this.style.background='var(--pink-soft)'" onmouseout="this.style.background='#fff'">
+            <div style="width:40px;height:40px;border-radius:50%;background:var(--pink-light);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">👤</div>
+            <div style="flex:1">
+              <div style="font-weight:500;font-size:.9rem">Shaxsiy ma'lumotlar</div>
+              <div style="font-size:.75rem;color:var(--gray)">Ism, yosh, telefon, manzil</div>
+            </div>
+            <div style="color:var(--gray);font-size:1rem">›</div>
+          </div>
+
+          <div onclick="pOpenSection('orders')" style="display:flex;align-items:center;gap:1rem;padding:1rem 1.2rem;cursor:pointer;border-bottom:1px solid rgba(244,167,185,.15)" onmouseover="this.style.background='var(--pink-soft)'" onmouseout="this.style.background='#fff'">
+            <div style="width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">📦</div>
+            <div style="flex:1">
+              <div style="font-weight:500;font-size:.9rem">Buyurtmalarim</div>
+              <div style="font-size:.75rem;color:var(--gray)">Barcha buyurtmalar tarixi</div>
+            </div>
+            <div style="color:var(--gray);font-size:1rem">›</div>
+          </div>
+
+          <div onclick="goPage('bonus')" style="display:flex;align-items:center;gap:1rem;padding:1rem 1.2rem;cursor:pointer" onmouseover="this.style.background='var(--pink-soft)'" onmouseout="this.style.background='#fff'">
+            <div style="width:40px;height:40px;border-radius:50%;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">⭐</div>
+            <div style="flex:1">
+              <div style="font-weight:500;font-size:.9rem">Bonus va sovg'alar</div>
+              <div style="font-size:.75rem;color:var(--gray)">Ballar, referal, do'kon</div>
+            </div>
+            <div style="color:var(--gray);font-size:1rem">›</div>
+          </div>
+        </div>
+
+        <!-- Xarid -->
+        <div style="background:#fff;border-radius:16px;overflow:hidden;margin-bottom:1rem;box-shadow:0 1px 6px rgba(0,0,0,.06)">
+          <div style="padding:.8rem 1.2rem;border-bottom:1px solid var(--pink-light);font-size:.72rem;color:var(--pink-deep);font-weight:600;text-transform:uppercase;letter-spacing:.08em">Xarid</div>
+
+          <div onclick="goPage('catalog')" style="display:flex;align-items:center;gap:1rem;padding:1rem 1.2rem;cursor:pointer;border-bottom:1px solid rgba(244,167,185,.15)" onmouseover="this.style.background='var(--pink-soft)'" onmouseout="this.style.background='#fff'">
+            <div style="width:40px;height:40px;border-radius:50%;background:var(--pink-light);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">🛍️</div>
+            <div style="flex:1">
+              <div style="font-weight:500;font-size:.9rem">Katalog</div>
+              <div style="font-size:.75rem;color:var(--gray)">Barcha mahsulotlar</div>
+            </div>
+            <div style="color:var(--gray);font-size:1rem">›</div>
+          </div>
+
+          <div onclick="toggleCart()" style="display:flex;align-items:center;gap:1rem;padding:1rem 1.2rem;cursor:pointer" onmouseover="this.style.background='var(--pink-soft)'" onmouseout="this.style.background='#fff'">
+            <div style="width:40px;height:40px;border-radius:50%;background:#d5f0e8;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">🛒</div>
+            <div style="flex:1">
+              <div style="font-weight:500;font-size:.9rem">Savatcha</div>
+              <div style="font-size:.75rem;color:var(--gray)">Tanlangan mahsulotlar</div>
+            </div>
+            <div style="color:var(--gray);font-size:1rem">›</div>
+          </div>
+        </div>
+
+        <!-- Chiqish -->
+        <div style="background:#fff;border-radius:16px;overflow:hidden;margin-bottom:1rem;box-shadow:0 1px 6px rgba(0,0,0,.06)">
+          <div onclick="pDoLogout()" style="display:flex;align-items:center;gap:1rem;padding:1rem 1.2rem;cursor:pointer" onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background='#fff'">
+            <div style="width:40px;height:40px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">🚪</div>
+            <div style="flex:1">
+              <div style="font-weight:500;font-size:.9rem;color:var(--red)">Chiqish</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SECTION PANELS (slide in) -->
+      <!-- INFO PANEL -->
+      <div id="pInfoPanel" style="display:none;position:fixed;inset:0;background:var(--gray-light);z-index:150;overflow-y:auto;margin-top:72px">
+        <div style="background:var(--pink-deep);padding:1rem 1.5rem;display:flex;align-items:center;gap:1rem;position:sticky;top:0;z-index:10">
+          <button onclick="pCloseSection('info')" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer">←</button>
+          <span style="color:#fff;font-weight:600;font-size:1rem">Shaxsiy ma'lumotlar</span>
+        </div>
+        <div style="padding:1rem">
+          <div style="background:#fff;border-radius:16px;overflow:hidden;margin-bottom:1rem;box-shadow:0 1px 6px rgba(0,0,0,.06)">
+            <div style="padding:.8rem 1.2rem;border-bottom:1px solid var(--pink-light);font-size:.72rem;color:var(--pink-deep);font-weight:600;text-transform:uppercase;letter-spacing:.08em">Ma'lumotlar</div>
+            <div style="padding:1.2rem;display:flex;flex-direction:column;gap:.9rem">
+              <div class="p-fg"><label class="p-lbl">Ism Familiya</label><input class="p-finp" type="text" id="pfName" placeholder="Humoyun Jurayev"/></div>
+              <div class="p-fg"><label class="p-lbl">Yosh</label><input class="p-finp" type="number" id="pfAge" placeholder="25"/></div>
+              <div class="p-fg"><label class="p-lbl">Tug'ilgan sana 🎂</label><input class="p-finp" type="date" id="pfBday"/></div>
+              <div class="p-fg"><label class="p-lbl">Telefon 1</label><input class="p-finp" type="tel" id="pfPhone1" placeholder="+998 90 000 00 00"/></div>
+              <div class="p-fg"><label class="p-lbl">Telefon 2</label><input class="p-finp" type="tel" id="pfPhone2" placeholder="+998 91 000 00 00"/></div>
+              <div class="p-fg"><label class="p-lbl">Manzil</label><input class="p-finp" type="text" id="pfAddr" placeholder="Toshkent..."/></div>
+              <button class="p-save-btn" onclick="pSaveProfile()">💾 Saqlash</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ORDERS PANEL -->
+      <div id="pOrdersPanel" style="display:none;position:fixed;inset:0;background:var(--gray-light);z-index:150;overflow-y:auto;margin-top:72px">
+        <div style="background:var(--pink-deep);padding:1rem 1.5rem;display:flex;align-items:center;gap:1rem;position:sticky;top:0;z-index:10">
+          <button onclick="pCloseSection('orders')" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer">←</button>
+          <span style="color:#fff;font-weight:600;font-size:1rem">Buyurtmalarim</span>
+        </div>
+        <div style="padding:1rem">
+          <div id="pMyOrders"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="page" id="page-admin">
+  <div class="admin-body">
+
+    <!-- LOGIN -->
+    <div id="loginWrap" class="login-wrap">
+      <div class="login-box">
+        <div style="font-size:3rem;margin-bottom:.8rem">👑</div>
+        <div class="login-logo"><span>Style</span> Shop</div>
+        <div class="login-sub">Admin paneliga kirish</div>
+        <input class="login-inp" type="email" id="lEmail" placeholder="Email manzil"/>
+        <input class="login-inp" type="password" id="lPass" placeholder="Parol" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <div class="login-err" id="lErr"></div>
+        <button class="login-btn2" onclick="doLogin()">Kirish 🔐</button>
+        <div class="back-link" onclick="goPage('home')">← Do'konga qaytish</div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="adminPanel" style="display:none;height:100vh;overflow:hidden">
+
+      <!-- OVERLAY (mobile) -->
+      <div id="sideOverlay" onclick="closeSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:59"></div>
+
+      <!-- SIDEBAR -->
+      <aside id="adminSidebar" style="
+        position:fixed;top:0;left:-260px;bottom:0;width:260px;
+        background:linear-gradient(180deg,#1a0d14 0%,#0f0a0d 100%);
+        border-right:1px solid rgba(244,167,185,.08);
+        display:flex;flex-direction:column;z-index:60;
+        transition:left .3s cubic-bezier(.4,0,.2,1);
+        box-shadow:4px 0 24px rgba(0,0,0,.4);
+      ">
+        <!-- Logo -->
+        <div style="padding:1.5rem 1.5rem 1rem;border-bottom:1px solid rgba(244,167,185,.08)">
+          <div style="font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--pink)"><span style="font-style:italic">Style</span> Shop</div>
+          <div style="font-size:.65rem;color:var(--gray);text-transform:uppercase;letter-spacing:.12em;margin-top:.2rem">Admin Panel</div>
+        </div>
+
+        <!-- Nav -->
+        <nav style="flex:1;padding:1rem 0;overflow-y:auto">
+          <div style="padding:.4rem 1.2rem .2rem;font-size:.62rem;color:var(--gray);letter-spacing:.12em;text-transform:uppercase;font-weight:600">Asosiy</div>
+          <button class="adm-nav active" id="nav-dash" onclick="showAPage('dash',this)">
+            <span class="adm-nav-icon" style="background:rgba(244,167,185,.15)">📊</span>
+            <span>Dashboard</span>
+            <span class="adm-nav-arrow">›</span>
+          </button>
+          <button class="adm-nav" id="nav-prods" onclick="showAPage('prods',this)">
+            <span class="adm-nav-icon" style="background:rgba(167,202,244,.15)">👗</span>
+            <span>Mahsulotlar</span>
+            <span class="adm-nav-badge" id="aBP">0</span>
+          </button>
+          <button class="adm-nav" id="nav-orders" onclick="showAPage('orders',this)">
+            <span class="adm-nav-icon" style="background:rgba(74,222,128,.15)">📦</span>
+            <span>Buyurtmalar</span>
+            <span class="adm-nav-badge" id="aBO">0</span>
+          </button>
+          <button class="adm-nav" id="nav-users" onclick="showAPage('users',this)">
+            <span class="adm-nav-icon" style="background:rgba(96,165,250,.15)">👥</span>
+            <span>Foydalanuvchilar</span>
+          </button>
+
+          <div style="padding:.4rem 1.2rem .2rem;font-size:.62rem;color:var(--gray);letter-spacing:.12em;text-transform:uppercase;font-weight:600;margin-top:.5rem">Marketing</div>
+          <button class="adm-nav" id="nav-promo" onclick="showAPage('promo',this)">
+            <span class="adm-nav-icon" style="background:rgba(251,191,36,.15)">🎯</span>
+            <span>Promo kodlar</span>
+          </button>
+          <button class="adm-nav" id="nav-gifts" onclick="showAPage('gifts',this)">
+            <span class="adm-nav-icon" style="background:rgba(244,167,185,.15)">🎁</span>
+            <span>Sovg'alar</span>
+          </button>
+          <button class="adm-nav" id="nav-banner" onclick="showAPage('banner',this)">
+            <span class="adm-nav-icon" style="background:rgba(167,202,244,.15)">🖼️</span>
+            <span>Banner</span>
+          </button>
+
+          <div style="padding:.4rem 1.2rem .2rem;font-size:.62rem;color:var(--gray);letter-spacing:.12em;text-transform:uppercase;font-weight:600;margin-top:.5rem">Tizim</div>
+          <button class="adm-nav" id="nav-settings" onclick="showAPage('settings',this)">
+            <span class="adm-nav-icon" style="background:rgba(255,255,255,.08)">⚙️</span>
+            <span>Sozlamalar</span>
+          </button>
+          <button class="adm-nav" onclick="window.open('/')">
+            <span class="adm-nav-icon" style="background:rgba(255,255,255,.08)">🌐</span>
+            <span>Saytni ko'rish</span>
+          </button>
+          <button class="adm-nav" onclick="doLogout()" style="color:var(--red)">
+            <span class="adm-nav-icon" style="background:rgba(248,113,113,.15)">🚪</span>
+            <span>Chiqish</span>
+          </button>
+        </nav>
+
+        <!-- Profile -->
+        <div style="padding:1rem 1.2rem;border-top:1px solid rgba(244,167,185,.08);display:flex;align-items:center;gap:.8rem">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--pink-deep),#c45570);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0">👑</div>
+          <div>
+            <div style="font-size:.82rem;font-weight:600;color:#f5eff2" id="aName">Admin</div>
+            <div style="font-size:.68rem;color:var(--gray)">Super Admin</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <div id="adminMain" style="margin-left:0;height:100vh;overflow-y:auto;background:#0d0a0f;transition:margin-left .3s">
+
+        <!-- TOPBAR -->
+        <div style="position:sticky;top:0;z-index:40;background:rgba(26,17,24,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(244,167,185,.08);padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:1rem">
+            <button onclick="toggleSidebar()" style="background:rgba(244,167,185,.1);border:none;color:var(--pink);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center">☰</button>
+            <div style="font-size:1rem;font-weight:600;color:#f5eff2" id="aPageTitle">Dashboard</div>
+          </div>
+          <div style="display:flex;gap:.6rem;align-items:center">
+            <div id="aNewOrderAlert" style="display:none;background:var(--pink-deep);color:#fff;border-radius:50px;padding:.3rem .8rem;font-size:.75rem;font-weight:600;cursor:pointer;animation:pulse 2s infinite" onclick="showAPage('orders',document.getElementById('nav-orders'))">🔔 Yangi buyurtma!</div>
+            <button onclick="loadData()" style="background:rgba(244,167,185,.1);border:none;color:var(--pink);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:1rem">🔄</button>
+          </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div style="padding:1.5rem">
+
+          <!-- ═══ DASHBOARD ═══ -->
+          <div class="a-page active" id="a-dash">
+
+            <!-- STAT CARDS -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem">
+              <div class="adm-stat-card" style="--accent:#e07a95">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                  <div>
+                    <div class="adm-stat-lbl">Mahsulotlar</div>
+                    <div class="adm-stat-num" id="sP">—</div>
+                    <div class="adm-stat-sub">Firebase'dan</div>
+                  </div>
+                  <div class="adm-stat-icon">👗</div>
+                </div>
+              </div>
+              <div class="adm-stat-card" style="--accent:#4ade80">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                  <div>
+                    <div class="adm-stat-lbl">Buyurtmalar</div>
+                    <div class="adm-stat-num" id="sO">—</div>
+                    <div class="adm-stat-sub">Jami</div>
+                  </div>
+                  <div class="adm-stat-icon">📦</div>
+                </div>
+              </div>
+              <div class="adm-stat-card" style="--accent:#fbbf24">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                  <div>
+                    <div class="adm-stat-lbl">Kutilmoqda</div>
+                    <div class="adm-stat-num" id="sPen">—</div>
+                    <div class="adm-stat-sub">To'lov + yangi</div>
+                  </div>
+                  <div class="adm-stat-icon">⏳</div>
+                </div>
+              </div>
+              <div class="adm-stat-card" style="--accent:#60a5fa">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                  <div>
+                    <div class="adm-stat-lbl">Foydalanuvchi</div>
+                    <div class="adm-stat-num" id="sUsers">—</div>
+                    <div class="adm-stat-sub">Ro'yxatdan o'tgan</div>
+                  </div>
+                  <div class="adm-stat-icon">👥</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CHARTS ROW -->
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:1rem;margin-bottom:1.5rem">
+              <!-- Weekly chart -->
+              <div class="adm-card">
+                <div class="adm-card-head">
+                  <span class="adm-card-title">📈 Haftalik buyurtmalar</span>
+                  <span style="font-size:.75rem;color:var(--gray)" id="weekTotal"></span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--gray);margin-bottom:.4rem" id="weekLabels"></div>
+                <div style="display:flex;align-items:flex-end;gap:4px;height:80px" id="weekChart"></div>
+              </div>
+              <!-- Category pie -->
+              <div class="adm-card">
+                <div class="adm-card-head"><span class="adm-card-title">📂 Kategoriyalar</span></div>
+                <div id="catStats" style="display:flex;flex-direction:column;gap:.5rem"></div>
+              </div>
+            </div>
+
+            <!-- RECENT ORDERS & TOP PRODUCTS -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div class="adm-card">
+                <div class="adm-card-head">
+                  <span class="adm-card-title">🕐 So'nggi buyurtmalar</span>
+                  <span class="adm-card-act" onclick="showAPage('orders',document.getElementById('nav-orders'))">Hammasi →</span>
+                </div>
+                <div id="dashOrders"><div class="loading"><div class="spinner"></div></div></div>
+              </div>
+              <div class="adm-card">
+                <div class="adm-card-head"><span class="adm-card-title">🔥 Top mahsulotlar</span></div>
+                <div id="topProds"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═══ MAHSULOTLAR ═══ -->
+          <div class="a-page" id="a-prods">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+              <div>
+                <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#f5eff2">Mahsulotlar</h2>
+                <p style="font-size:.78rem;color:var(--gray);margin-top:.2rem">Jami <span id="prodTotalTxt">0</span> ta mahsulot</p>
+              </div>
+              <button class="adm-btn" onclick="openPM()">+ Yangi mahsulot</button>
+            </div>
+            <div class="adm-card">
+              <div style="display:flex;gap:.7rem;margin-bottom:1rem;flex-wrap:wrap">
+                <div style="flex:1;min-width:160px;display:flex;align-items:center;gap:.5rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.5rem .9rem">
+                  <span style="color:var(--gray)">🔍</span>
+                  <input style="background:none;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:.85rem;color:#f5eff2;width:100%" type="text" id="aPS" placeholder="Qidirish..." oninput="renderAProds()"/>
+                </div>
+                <select class="a-sel" style="max-width:150px" id="aPC" onchange="renderAProds()">
+                  <option value="">Barcha kategoriya</option>
+                  <option value="Erkaklar">👔 Erkaklar</option>
+                  <option value="Ayollar">👗 Ayollar</option>
+                  <option value="Bolalar">🧒 Bolalar</option>
+                  <option value="Sumkalar">👜 Sumkalar</option>
+                  <option value="Kosmetika">💄 Kosmetika</option>
+                  <option value="O'yinchoqlar">🧸 O'yinchoqlar</option>
+                </select>
+                <select class="a-sel" style="max-width:130px" id="aPB" onchange="renderAProds()">
+                  <option value="">Barcha holat</option>
+                  <option value="new">✨ Yangi</option>
+                  <option value="top">⭐ Top</option>
+                  <option value="sale">🔥 Sale</option>
+                </select>
+              </div>
+              <div id="aProdsT"><div class="loading"><div class="spinner"></div></div></div>
+            </div>
+          </div>
+
+          <!-- ═══ BUYURTMALAR ═══ -->
+          <div class="a-page" id="a-orders">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+              <div>
+                <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#f5eff2">Buyurtmalar</h2>
+                <p style="font-size:.78rem;color:var(--gray);margin-top:.2rem">Real vaqt nazorat</p>
+              </div>
+              <select class="a-sel" id="aOF" onchange="renderAOrders()">
+                <option value="">Barcha</option>
+                <option value="new">🆕 Yangi</option>
+                <option value="payment_pending">💳 To'lov kutilmoqda</option>
+                <option value="payment_confirmed">✅ To'lov tasdiqlandi</option>
+                <option value="processing">⚙️ Jarayonda</option>
+                <option value="shipped">🚚 Yuborildi</option>
+                <option value="done">🎉 Tugallandi</option>
+                <option value="cancelled">❌ Bekor</option>
+              </select>
+            </div>
+            <!-- Order stats mini -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1rem">
+              <div style="background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.2);border-radius:12px;padding:.8rem;text-align:center;cursor:pointer;transition:all .2s" onclick="document.getElementById('aOF').value='new';renderAOrders()">
+                <div style="font-size:1.3rem;font-weight:700;color:var(--blue)" id="oStatNew">0</div>
+                <div style="font-size:.7rem;color:var(--gray)">Yangi</div>
+              </div>
+              <div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2);border-radius:12px;padding:.8rem;text-align:center;cursor:pointer;transition:all .2s" onclick="document.getElementById('aOF').value='payment_pending';renderAOrders()">
+                <div style="font-size:1.3rem;font-weight:700;color:var(--yellow)" id="oStatPay">0</div>
+                <div style="font-size:.7rem;color:var(--gray)">To'lov</div>
+              </div>
+              <div style="background:rgba(244,167,185,.1);border:1px solid rgba(244,167,185,.2);border-radius:12px;padding:.8rem;text-align:center;cursor:pointer;transition:all .2s" onclick="document.getElementById('aOF').value='shipped';renderAOrders()">
+                <div style="font-size:1.3rem;font-weight:700;color:var(--pink)" id="oStatShip">0</div>
+                <div style="font-size:.7rem;color:var(--gray)">Yuborildi</div>
+              </div>
+              <div style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.2);border-radius:12px;padding:.8rem;text-align:center;cursor:pointer;transition:all .2s" onclick="document.getElementById('aOF').value='done';renderAOrders()">
+                <div style="font-size:1.3rem;font-weight:700;color:var(--green)" id="oStatDone">0</div>
+                <div style="font-size:.7rem;color:var(--gray)">Tugallandi</div>
+              </div>
+            </div>
+            <div class="adm-card"><div id="aOrdersT"><div class="loading"><div class="spinner"></div></div></div></div>
+          </div>
+
+          <!-- ═══ FOYDALANUVCHILAR ═══ -->
+          <div class="a-page" id="a-users">
+            <div style="margin-bottom:1.2rem;display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#f5eff2">Foydalanuvchilar</h2>
+                <p style="font-size:.78rem;color:var(--gray);margin-top:.2rem">Ro'yxatdan o'tgan mijozlar</p>
+              </div>
+              <div style="background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.2);border-radius:10px;padding:.5rem 1rem;color:var(--blue);font-size:.82rem;font-weight:600" id="userTotalBadge">0 ta</div>
+            </div>
+            <div id="aUsersT"><div class="loading"><div class="spinner"></div></div></div>
+          </div>
+
+          <!-- ═══ PROMO KODLAR ═══ -->
+          <div class="a-page" id="a-promo">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+              <div>
+                <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#f5eff2">Promo kodlar</h2>
+                <p style="font-size:.78rem;color:var(--gray);margin-top:.2rem">Chegirma kodlarini boshqaring</p>
+              </div>
+              <button class="adm-btn" onclick="openPromoModal()">+ Yangi promo</button>
+            </div>
+            <div class="adm-card"><div id="aPromoT"><div class="loading"><div class="spinner"></div></div></div></div>
+          </div>
+
+          <!-- ═══ SOVGʻALAR ═══ -->
+          <div class="a-page" id="a-gifts">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+              <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#f5eff2">Sovg'alar boshqaruvi</h2>
+              <button class="adm-btn" onclick="openGiftModal()">+ Yangi sovg'a</button>
+            </div>
+            <div class="adm-card" style="margin-bottom:1rem">
+              <div class="adm-card-head"><span class="adm-card-title">🎁 Sovg'alar do'koni</span></div>
+              <div id="aGiftsT"><div class="loading"><div class="spinner"></div></div></div>
+            </div>
+            <div class="adm-card">
+              <div class="adm-card-head"><span class="adm-card-title">📋 Sovg'a buyurtmalari</span></div>
+              <div id="aGiftOrdersT"><div class="loading"><div class="spinner"></div></div></div>
+            </div>
+          </div>
+
+          <!-- ═══ BANNER ═══ -->
+          <div class="a-page" id="a-banner">
+            <div style="margin-bottom:1.2rem">
+              <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#f5eff2">Banner boshqaruvi</h2>
+              <p style="font-size:.78rem;color:var(--gray);margin-top:.2rem">Bosh sahifa bannerini tahrirlang</p>
+            </div>
+            <div class="adm-card">
+              <div class="adm-card-head"><span class="adm-card-title">🖼️ Asosiy banner</span></div>
+              <div style="display:flex;flex-direction:column;gap:.8rem;margin-top:.5rem">
+                <div class="a-fg"><label class="a-lbl">Banner sarlavhasi</label><input class="a-inp" id="bTitle" placeholder="Yangi kolleksiya 2025"/></div>
+                <div class="a-fg"><label class="a-lbl">Banner matni</label><textarea class="a-ta" id="bText" placeholder="Qisqacha tavsif..."></textarea></div>
+                <div class="a-fg"><label class="a-lbl">Tugma matni</label><input class="a-inp" id="bBtn" placeholder="Xarid qilish →"/></div>
+                <div class="a-fg"><label class="a-lbl">Emoji / Rasm</label><input class="a-inp" id="bEmoji" placeholder="🎁"/></div>
+                <button class="adm-btn" onclick="saveBanner()" style="align-self:flex-start">💾 Saqlash</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═══ SOZLAMALAR ═══ -->
+          <div class="a-page" id="a-settings">
+            <div style="margin-bottom:1.2rem">
+              <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#f5eff2">Do'kon sozlamalari</h2>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+              <div class="adm-card">
+                <div class="adm-card-head"><span class="adm-card-title">📋 Asosiy ma'lumotlar</span></div>
+                <div style="display:flex;flex-direction:column;gap:.8rem;margin-top:.5rem">
+                  <div class="a-fg"><label class="a-lbl">Do'kon nomi</label><input class="a-inp" id="sName" placeholder="Style Shop"/></div>
+                  <div class="a-fg"><label class="a-lbl">Telefon 1</label><input class="a-inp" id="sPhone1" placeholder="+998 90 000 00 00"/></div>
+                  <div class="a-fg"><label class="a-lbl">Telefon 2</label><input class="a-inp" id="sPhone2" placeholder="+998 91 000 00 00"/></div>
+                  <div class="a-fg"><label class="a-lbl">Email</label><input class="a-inp" id="sEmail" placeholder="info@styleshop.uz"/></div>
+                  <div class="a-fg"><label class="a-lbl">Telegram</label><input class="a-inp" id="sTelegram" placeholder="@styleshop_uz"/></div>
+                  <div class="a-fg"><label class="a-lbl">Instagram</label><input class="a-inp" id="sInstagram" placeholder="@styleshop_uz"/></div>
+                  <div class="a-fg"><label class="a-lbl">Tavsif</label><textarea class="a-ta" id="sDesc" placeholder="Do'kon haqida..."></textarea></div>
+                  <button class="adm-btn" onclick="saveSettings()">💾 Saqlash</button>
+                </div>
+              </div>
+              <div class="adm-card">
+                <div class="adm-card-head"><span class="adm-card-title">💳 To'lov ma'lumotlari</span></div>
+                <div style="display:flex;flex-direction:column;gap:.8rem;margin-top:.5rem">
+                  <div class="a-fg"><label class="a-lbl">Karta raqami</label><input class="a-inp" id="sCard" placeholder="8600 0000 0000 0000"/></div>
+                  <div class="a-fg"><label class="a-lbl">Karta egasi</label><input class="a-inp" id="sCardName" placeholder="SHARIFA JO'RAYEVA"/></div>
+                  <div class="a-fg"><label class="a-lbl">Bank nomi</label><input class="a-inp" id="sBank" placeholder="Uzcard / Humo"/></div>
+                  <div class="a-fg"><label class="a-lbl">Yetkazib berish narxi</label><input class="a-inp" id="sDelivery" type="number" placeholder="20000"/></div>
+                  <div class="a-fg"><label class="a-lbl">Yetkazib berish muddati</label><input class="a-inp" id="sDeliveryDays" placeholder="1-3 ish kuni"/></div>
+                  <button class="adm-btn" onclick="saveSettings()">💾 Saqlash</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- KATEGORIYALAR -->
+            <div class="adm-card">
+              <div class="adm-card-head">
+                <span class="adm-card-title">📂 Kategoriyalar boshqaruvi</span>
+                <button class="adm-btn" style="padding:.45rem 1rem;font-size:.8rem" onclick="openCatModal()">+ Yangi</button>
+              </div>
+              <div id="aCatsT">
+                <div class="loading"><div class="spinner"></div></div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /content -->
+      </div><!-- /main -->
+    </div><!-- /adminPanel -->
+  </div><!-- /admin-body -->
+</div>
+
+<!-- PRODUCT MODAL -->
+<div class="modal-bg" id="PM">
+  <div class="modal-box">
+    <div class="modal-head"><span class="modal-title" id="PMTitle">Yangi mahsulot</span><button class="modal-close" onclick="closePM()">✕</button></div>
+    <div class="a-form">
+      <div class="a-fg full"><label class="a-lbl">Nomi *</label><input class="a-inp" id="mN" placeholder="Ko'ylak"/></div>
+      <div class="a-fg"><label class="a-lbl">Narx (so'm) *</label><input class="a-inp" id="mPr" type="number" placeholder="250000"/></div>
+      <div class="a-fg"><label class="a-lbl">Kategoriya</label>
+        <select class="a-sel" id="mCat">
+          <option value="Erkaklar">👔 Erkaklar</option>
+          <option value="Ayollar">👗 Ayollar</option>
+          <option value="Bolalar">🧒 Bolalar</option>
+          <option value="Sumkalar">👜 Sumkalar</option>
+          <option value="Kosmetika">💄 Kosmetika</option>
+          <option value="O'yinchoqlar">🧸 O'yinchoqlar</option>
+        </select>
+      </div>
+      <div class="a-fg"><label class="a-lbl">Holat</label>
+        <select class="a-sel" id="mB"><option value="">Oddiy</option><option value="new">✨ Yangi</option><option value="top">⭐ Top</option><option value="sale">🔥 Sale</option></select>
+      </div>
+      <div class="a-fg"><label class="a-lbl">Emoji (rasm yo'q bo'lsa)</label><input class="a-inp" id="mE" placeholder="👗" maxlength="4"/></div>
+      <div class="a-fg"><label class="a-lbl">Reyting</label><input class="a-inp" id="mSt" type="number" min="1" max="5" step="0.1" placeholder="4.5"/></div>
+      <div class="a-fg"><label class="a-lbl">Yetkazib berish muddati</label><input class="a-inp" id="mDel" placeholder="1-3 ish kuni"/></div>
+      <div class="a-fg"><label class="a-lbl">Rang/o'lcham</label><input class="a-inp" id="mSize" placeholder="S, M, L, XL"/></div>
+      <div class="a-fg full"><label class="a-lbl">Tavsif</label><textarea class="a-ta" id="mD" placeholder="Mahsulot haqida batafsil..."></textarea></div>
+
+      <!-- RASM YUKLASH -->
+      <div class="a-fg full">
+        <label class="a-lbl">📸 Rasm yuklash</label>
+        <div class="img-upload-area" onclick="document.getElementById('imgFile').click()">
+          <input type="file" id="imgFile" accept="image/*" style="display:none" onchange="uploadImage(this)"/>
+          <span class="img-upload-icon">🖼️</span>
+          <div class="img-upload-text">Rasm tanlash uchun bosing</div>
+          <div class="upload-progress" id="uploadProgress">
+            <div style="font-size:.75rem;color:var(--pink);margin-bottom:.3rem" id="uploadText">Yuklanmoqda...</div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          </div>
+        </div>
+        <img id="imgPreview" class="img-preview" src="" alt="Preview"/>
+        <input type="hidden" id="mImg" value=""/>
+      </div>
+
+      <div class="a-fg full" style="display:flex;gap:.7rem;justify-content:flex-end">
+        <button class="a-btn-g" onclick="closePM()">Bekor</button>
+        <button class="a-btn" id="mSave" onclick="saveProd()">💾 Saqlash</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER MODAL -->
+<div class="modal-bg" id="OM">
+  <div class="modal-box">
+    <div class="modal-head"><span class="modal-title">📦 Buyurtma berish</span><button class="modal-close" onclick="closeOM()">✕</button></div>
+
+    <!-- TO'LOV MA'LUMOTI -->
+    <div class="payment-info" id="paymentInfoBlock">
+      <h4>💳 To'lov ma'lumotlari</h4>
+      <p style="margin-bottom:.6rem">Buyurtmani tasdiqlashdan so'ng quyidagi kartaga to'lov qiling:</p>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+        <div>
+          <div class="card-number" id="payCardNumber">9860 0803 1177 8528</div>
+          <p style="margin-top:.3rem"><strong id="payCardName">SHARIFA JO'RAYEVA</strong> — <span id="payBank">Uzcard</span></p>
+        </div>
+        <!-- QR KOD -->
+        <div style="text-align:center;flex-shrink:0">
+          <div id="qrCode" style="background:#fff;padding:6px;border-radius:8px;display:inline-block"></div>
+          <div style="font-size:.68rem;color:var(--gray);margin-top:.3rem">QR orqali to'lash</div>
+        </div>
+      </div>
+      <p style="margin-top:.6rem;color:var(--pink-deep);font-size:.8rem">📲 Click, Payme yoki boshqa ilovada QR ni skanerlang!</p>
+      <p style="margin-top:.3rem;color:var(--gray);font-size:.78rem">To'lovdan keyin bizga Telegram yoki telefon orqali xabar bering!</p>
+    </div>
+
+    <div class="a-form">
+      <div class="a-fg full"><label class="a-lbl">Ism Familiya *</label><input class="a-inp" id="oN" placeholder="Ism Familiya"/></div>
+      <div class="a-fg"><label class="a-lbl">Telefon 1 *</label><input class="a-inp" id="oP1" placeholder="+998 90 000 00 00"/></div>
+      <div class="a-fg"><label class="a-lbl">Telefon 2</label><input class="a-inp" id="oP2" placeholder="+998 91 000 00 00"/></div>
+      <div class="a-fg full"><label class="a-lbl">Manzil *</label><textarea class="a-ta" id="oA" placeholder="Toshkent, Chilonzor..."></textarea></div>
+      <div class="a-fg full"><label class="a-lbl">Izoh</label><input class="a-inp" id="oNote" placeholder="Qo'shimcha ma'lumot..."/></div>
+      <div class="a-fg full" style="display:flex;gap:.7rem;justify-content:flex-end">
+        <button class="a-btn-g" onclick="closeOM()">Bekor</button>
+        <button class="a-btn" onclick="submitOrder()">✅ Tasdiqlash</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY MODAL -->
+<div class="modal-bg" id="catModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-title" id="catModalTitle" style="color:#f5eff2">Yangi kategoriya</span>
+      <button class="modal-close" onclick="closeCatModal()">✕</button>
+    </div>
+    <div class="a-form">
+      <div class="a-fg full"><label class="a-lbl">Kategoriya nomi *</label><input class="a-inp" id="cName" placeholder="Masalan: Sport kiyimlari"/></div>
+      <div class="a-fg"><label class="a-lbl">Emoji *</label><input class="a-inp" id="cEmoji" placeholder="👟" maxlength="4"/></div>
+      <div class="a-fg"><label class="a-lbl">Rang (gradient)</label>
+        <select class="a-sel" id="cColor">
+          <option value="pink">🌸 Pushti</option>
+          <option value="purple">💜 Binafsha</option>
+          <option value="green">💚 Yashil</option>
+          <option value="yellow">💛 Sariq</option>
+          <option value="blue">💙 Ko'k</option>
+          <option value="red">❤️ Qizil</option>
+        </select>
+      </div>
+      <div class="a-fg full"><label class="a-lbl">Tavsif</label><input class="a-inp" id="cDesc" placeholder="Qisqacha tavsif..."/></div>
+      <div class="a-fg full" style="display:flex;gap:.7rem;justify-content:flex-end">
+        <button class="a-btn-g" onclick="closeCatModal()">Bekor</button>
+        <button class="adm-btn" onclick="saveCat()">💾 Saqlash</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROMO MODAL -->
+<div class="modal-bg" id="promoModal">
+  <div class="modal-box">
+    <div class="modal-head"><span class="modal-title" style="color:#f5eff2">🎯 Yangi promo kod</span><button class="modal-close" onclick="closePromoModal()">✕</button></div>
+    <div class="a-form">
+      <div class="a-fg full"><label class="a-lbl">Promo kod *</label><input class="a-inp" id="pmCode" placeholder="SUMMER20" style="text-transform:uppercase"/></div>
+      <div class="a-fg"><label class="a-lbl">Chegirma miqdori *</label><input class="a-inp" id="pmDiscount" type="number" placeholder="20"/></div>
+      <div class="a-fg"><label class="a-lbl">Turi</label>
+        <select class="a-sel" id="pmType">
+          <option value="percent">% foiz</option>
+          <option value="fixed">So'm</option>
+        </select>
+      </div>
+      <div class="a-fg full"><label class="a-lbl">Foydalanish limiti</label><input class="a-inp" id="pmLimit" type="number" placeholder="100"/></div>
+      <div class="a-fg full" style="display:flex;gap:.7rem;justify-content:flex-end">
+        <button class="a-btn-g" onclick="closePromoModal()">Bekor</button>
+        <button class="adm-btn" onclick="savePromo()">💾 Yaratish</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GIFT MODAL -->
+<div class="modal-bg" id="GM">
+  <div class="modal-box">
+    <div class="modal-head"><span class="modal-title" id="GMTitle">Yangi sovg'a</span><button class="modal-close" onclick="closeGM()">✕</button></div>
+    <div class="a-form">
+      <div class="a-fg full"><label class="a-lbl">Nomi *</label><input class="a-inp" id="gName" placeholder="5% chegirma"/></div>
+      <div class="a-fg"><label class="a-lbl">Emoji</label><input class="a-inp" id="gEmoji" placeholder="🎁" maxlength="4"/></div>
+      <div class="a-fg"><label class="a-lbl">Kerakli bal *</label><input class="a-inp" id="gPoints" type="number" placeholder="100"/></div>
+      <div class="a-fg full"><label class="a-lbl">Tavsif</label><input class="a-inp" id="gDesc" placeholder="Keyingi xaridda 5% chegirma"/></div>
+      <div class="a-fg full" style="display:flex;gap:.7rem;justify-content:flex-end">
+        <button class="a-btn-g" onclick="closeGM()">Bekor</button>
+        <button class="a-btn" onclick="saveGift()">💾 Saqlash</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="modal-bg" id="CM">
+  <div class="modal-box" style="width:300px;text-align:center">
+    <div style="font-size:2rem;margin-bottom:.6rem">⚠️</div>
+    <h3 style="color:#f5eff2;margin-bottom:.4rem">O'chirishni tasdiqlang</h3>
+    <p style="color:var(--gray);font-size:.84rem;margin-bottom:1.2rem">Bu mahsulot o'chiriladi.</p>
+    <div style="display:flex;gap:.7rem;justify-content:center">
+      <button class="a-btn-g" onclick="closeCM()">Bekor</button>
+      <button class="a-btn" style="background:var(--red)" onclick="doDelete()">O'chirish</button>
+    </div>
+  </div>
+</div>
+
+<!-- CART -->
+<div class="cart-bg" id="cartBG" onclick="toggleCart()"></div>
+<div class="cart-side" id="cartSide">
+  <div class="cart-head"><h3>🛒 Savatcha</h3><button class="cart-close" onclick="toggleCart()">✕</button></div>
+  <div id="cartBody"><div class="cart-empty"><span style="font-size:3rem">🛍️</span><span>Savatcha bo'sh</span></div></div>
+  <div id="cartFoot" style="display:none">
+    <div class="cart-foot">
+      <div class="cart-total"><span>Jami:</span><span id="cartTot">0 so'm</span></div>
+      <button class="btn-order" onclick="openOM()">Buyurtma berish →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyCS92EyHEBLAm3O2zOy7giTzfhfsbMrWoY",
+    authDomain: "style-shop-ba8a3.firebaseapp.com",
+    projectId: "style-shop-ba8a3",
+    storageBucket: "style-shop-ba8a3.firebasestorage.app",
+    messagingSenderId: "898146645846",
+    appId: "1:898146645846:web:a9f5f9626014259f5c48f7"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+
+  // ImgBB API key
+  const IMGBB_KEY = '340de3400d65688b0450cded74740757';
+
+  // STATE
+  let products=[], orders=[], users=[], shopSettings={}, cart=[], likes=new Set();
+  let editId=null, deleteId=null, curCat='all', curPage=1;
+  const PER=8;
+  const fmt=p=>(p||0).toLocaleString('uz-UZ')+" so'm";
+
+  const badgeChip=b=>({new:'<span class="a-chip chip-green">✨ Yangi</span>',top:'<span class="a-chip chip-yellow">⭐ Top</span>',sale:'<span class="a-chip chip-red">🔥 Sale</span>'}[b]||'<span class="a-chip" style="background:rgba(255,255,255,.1);color:var(--gray)">Oddiy</span>');
+  const statusChip=s=>({
+    new:'<span class="a-chip chip-blue">🆕 Yangi</span>',
+    processing:'<span class="a-chip chip-yellow">⚙️ Jarayonda</span>',
+    payment_pending:'<span class="a-chip" style="background:rgba(251,191,36,.2);color:#f59e0b">💳 To\'lov kutilmoqda</span>',
+    payment_confirmed:'<span class="a-chip chip-green">✅ To\'lov tasdiqlandi</span>',
+    shipped:'<span class="a-chip chip-pink">🚚 Yuborildi</span>',
+    done:'<span class="a-chip chip-green">🎉 Tugallandi</span>',
+    cancelled:'<span class="a-chip chip-red">❌ Bekor</span>'
+  }[s]||s);
+
+  // IMAGE UPLOAD
+  async function uploadImage(input) {
+    const file = input.files[0];
+    if(!file) return;
+    const progress = document.getElementById('uploadProgress');
+    const fill = document.getElementById('progressFill');
+    const text = document.getElementById('uploadText');
+    progress.classList.add('show');
+    text.textContent = 'Yuklanmoqda...';
+    fill.style.width = '30%';
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      fill.style.width = '60%';
+      text.textContent = 'Serverga yuborilmoqda...';
+      const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      fill.style.width = '100%';
+      if(data.success) {
+        const url = data.data.url;
+        document.getElementById('mImg').value = url;
+        const preview = document.getElementById('imgPreview');
+        preview.src = url;
+        preview.classList.add('show');
+        text.textContent = '✅ Rasm yuklandi!';
+        toast('✅ Rasm muvaffaqiyatli yuklandi!');
+      } else {
+        text.textContent = '❌ Xatolik!';
+        toast('❌ Rasm yuklanmadi', 'error');
+      }
+    } catch(e) {
+      text.textContent = '❌ Tarmoq xatosi';
+      toast('❌ Xatolik: ' + e.message);
+    }
+    setTimeout(()=>progress.classList.remove('show'), 3000);
+  }
+
+  // PAGE NAV
+  function goPage(name){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+name).classList.add('active');
+    document.getElementById('mainNav').style.display=name==='admin'?'none':'flex';
+    if(name==='profile'){
+      const user=auth.currentUser;
+      if(user){document.getElementById('pAuthScreen').style.display='none';document.getElementById('pContent').style.display='block';pShowProfile(user);}
+      else{document.getElementById('pAuthScreen').style.display='flex';document.getElementById('pContent').style.display='none';}
+    }
+    if(name==='bonus'){
+      const user=auth.currentUser;
+      if(user){bShowBonus(user);}
+      else{document.getElementById('bonusLoginMsg').style.display='block';document.getElementById('bonusContent').style.display='none';}
+    }
+    window.scrollTo(0,0);
+    if(name==='catalog') renderCat();
+    if(name==='home') renderHome();
+  }
+  window.goPage=goPage;
+
+  // FIREBASE DATA
+  function loadData(){
+    // Products
+    db.collection('products').orderBy('createdAt','desc').onSnapshot(snap=>{
+      products=snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderHome(); renderCat(); renderAProds();
+      document.getElementById('heroProdCount').textContent=products.length+' Mahsulot';
+      document.getElementById('aBP').textContent=products.length;
+      document.getElementById('sP').textContent=products.length;
+    });
+
+    // Orders
+    db.collection('orders').orderBy('createdAt','desc').onSnapshot(snap=>{
+      orders=snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderAOrders(); renderDashOrders();
+      document.getElementById('aBO').textContent=orders.length;
+      document.getElementById('sO').textContent=orders.length;
+      document.getElementById('sPen').textContent=orders.filter(o=>['new','processing','payment_pending'].includes(o.status)).length;
+      renderOrderMiniStats();
+      renderDashChart();
+      renderTopProds();
+      // New order notification
+      const newCount = orders.filter(o=>o.status==='new').length;
+      const alertEl = document.getElementById('aNewOrderAlert');
+      if(alertEl) alertEl.style.display = newCount>0?'block':'none';
+    });
+
+    // Users
+    db.collection('users').onSnapshot(snap=>{
+      dbUsers=snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderAUsers();
+      const sUsersEl = document.getElementById('sUsers');
+      if(sUsersEl) sUsersEl.textContent = dbUsers.length;
+    });
+
+    // Settings
+    db.collection('settings').doc('shop').onSnapshot(doc=>{
+      if(doc.exists){
+        shopSettings=doc.data();
+        applySettings();
+      }
+    });
+  }
+
+  function applySettings(){
+    if(shopSettings.phone1) document.getElementById('footerPhone').textContent='📞 '+shopSettings.phone1;
+    if(shopSettings.email) document.getElementById('footerEmail').textContent='✉️ '+shopSettings.email;
+    if(shopSettings.desc) document.getElementById('footerDesc').textContent=shopSettings.desc;
+    if(shopSettings.telegram) document.getElementById('ftTelegram').textContent='Telegram: '+shopSettings.telegram;
+    if(shopSettings.instagram) document.getElementById('ftInstagram').textContent='Instagram: '+shopSettings.instagram;
+    if(shopSettings.phone1) document.getElementById('ftPhone2').textContent=shopSettings.phone1;
+    if(shopSettings.cardNumber) document.getElementById('payCardNumber').textContent=shopSettings.cardNumber;
+    if(shopSettings.cardName) document.getElementById('payCardName').textContent=shopSettings.cardName;
+    if(shopSettings.bank) document.getElementById('payBank').textContent=shopSettings.bank;
+    // Fill settings form
+    if(document.getElementById('sName')) document.getElementById('sName').value=shopSettings.name||'';
+    if(document.getElementById('sPhone1')) document.getElementById('sPhone1').value=shopSettings.phone1||'';
+    if(document.getElementById('sPhone2')) document.getElementById('sPhone2').value=shopSettings.phone2||'';
+    if(document.getElementById('sEmail')) document.getElementById('sEmail').value=shopSettings.email||'';
+    if(document.getElementById('sTelegram')) document.getElementById('sTelegram').value=shopSettings.telegram||'';
+    if(document.getElementById('sInstagram')) document.getElementById('sInstagram').value=shopSettings.instagram||'';
+    if(document.getElementById('sDesc')) document.getElementById('sDesc').value=shopSettings.desc||'';
+    if(document.getElementById('sCard')) document.getElementById('sCard').value=shopSettings.cardNumber||'';
+    if(document.getElementById('sCardName')) document.getElementById('sCardName').value=shopSettings.cardName||'';
+    if(document.getElementById('sBank')) document.getElementById('sBank').value=shopSettings.bank||'';
+    if(document.getElementById('sDelivery')) document.getElementById('sDelivery').value=shopSettings.deliveryPrice||'';
+    if(document.getElementById('sDeliveryDays')) document.getElementById('sDeliveryDays').value=shopSettings.deliveryDays||'';
+  }
+
+  async function saveSettings(){
+    const data={
+      name:document.getElementById('sName').value,
+      phone1:document.getElementById('sPhone1').value,
+      phone2:document.getElementById('sPhone2').value,
+      email:document.getElementById('sEmail').value,
+      telegram:document.getElementById('sTelegram').value,
+      instagram:document.getElementById('sInstagram').value,
+      desc:document.getElementById('sDesc').value,
+      cardNumber:document.getElementById('sCard').value,
+      cardName:document.getElementById('sCardName').value,
+      bank:document.getElementById('sBank').value,
+      deliveryPrice:parseInt(document.getElementById('sDelivery').value)||0,
+      deliveryDays:document.getElementById('sDeliveryDays').value,
+    };
+    try{
+      await db.collection('settings').doc('shop').set(data);
+      toast('✅ Sozlamalar saqlandi!');
+    }catch(e){ toast('❌ Xatolik: '+e.message); }
+  }
+  window.saveSettings=saveSettings;
+
+  // PROD CARD
+  function prodCard(p){
+    const bc=p.badge==='sale'?'badge-sale':p.badge==='new'?'badge-new':'';
+    const bt=p.badge==='new'?'✨ Yangi':p.badge==='top'?'⭐ Top':p.badge==='sale'?'🔥 Sale':'';
+    const deliveryDays=p.delivery||(shopSettings.deliveryDays||'1-3 ish kuni');
+    return`<div class="prod-card">
+      <div class="prod-img">
+        ${p.badge?`<span class="prod-badge ${bc}">${bt}</span>`:''}
+        <button class="prod-wish" onclick="event.stopPropagation();toggleLike('${p.id}',this)">${likes.has(p.id)?'❤️':'🤍'}</button>
+        ${p.imageUrl?`<img src="${p.imageUrl}" alt="${p.name}" onerror="this.style.display='none'"/><span class="emoji-fallback">${p.emoji||'👕'}</span>`:`<span class="emoji-fallback">${p.emoji||'👕'}</span>`}
+      </div>
+      <div class="prod-info">
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-cat">${p.cat}</div>
+        <div class="prod-delivery">🚚 ${deliveryDays}</div>
+        <div class="prod-footer">
+          <span class="prod-price">${fmt(p.price)}</span>
+          <button class="prod-add" onclick="addCart('${p.id}')">+</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // HOME
+  function renderHome(){
+    const top=[...products].sort((a,b)=>(b.stars||0)-(a.stars||0)).slice(0,4);
+    document.getElementById('homeProds').innerHTML=top.length?top.map(prodCard).join(''):'<div class="empty-st" style="grid-column:1/-1">Mahsulotlar yuklanmoqda...</div>';
+  }
+
+  // CATALOG
+  function setCat(cat){ curCat=cat; curPage=1; renderCat(); }
+  function setCatChip(btn,cat){
+    document.querySelectorAll('#catChips .chip').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active'); setCat(cat);
+  }
+  function clearF(){
+    setCat('all');
+    document.getElementById('searchQ').value='';
+    document.getElementById('pMin').value=0;
+    document.getElementById('pMax').value=5000000;
+    document.querySelectorAll('#catChips .chip')[0].classList.add('active');
+    renderCat();
+  }
+  window.setCat=setCat; window.setCatChip=setCatChip; window.clearF=clearF;
+
+  function renderCat(){
+    const q=(document.getElementById('searchQ')?.value||'').toLowerCase();
+    const minP=parseInt(document.getElementById('pMin')?.value)||0;
+    const maxP=parseInt(document.getElementById('pMax')?.value)||5000000;
+    const sort=document.getElementById('sortQ')?.value||'';
+    let f=products.filter(p=>{
+      if(q&&!p.name?.toLowerCase().includes(q)) return false;
+      if(curCat!=='all'&&p.cat!==curCat) return false;
+      if((p.price||0)<minP||(p.price||0)>maxP) return false;
+      return true;
+    });
+    if(sort==='asc') f.sort((a,b)=>a.price-b.price);
+    else if(sort==='desc') f.sort((a,b)=>b.price-a.price);
+    else if(sort==='stars') f.sort((a,b)=>(b.stars||0)-(a.stars||0));
+    const total=f.length, tp=Math.ceil(total/PER)||1;
+    if(curPage>tp) curPage=1;
+    const paged=f.slice((curPage-1)*PER,curPage*PER);
+    document.getElementById('catCount').textContent=total;
+    const g=document.getElementById('catProds');
+    g.innerHTML=paged.length?paged.map(prodCard).join(''):'<div class="empty-st" style="grid-column:1/-1">🔍 Mahsulot topilmadi</div>';
+    const pg=document.getElementById('catPages');
+    if(tp<=1){pg.innerHTML='';return;}
+    let h='';
+    if(curPage>1) h+=`<button class="page-btn" onclick="goCP(${curPage-1})">‹</button>`;
+    for(let i=1;i<=tp;i++) h+=`<button class="page-btn ${i===curPage?'active':''}" onclick="goCP(${i})">${i}</button>`;
+    if(curPage<tp) h+=`<button class="page-btn" onclick="goCP(${curPage+1})">›</button>`;
+    pg.innerHTML=h;
+  }
+  window.renderCat=renderCat;
+  window.goCP=p=>{curPage=p;renderCat();window.scrollTo({top:200,behavior:'smooth'});};
+
+  // CART
+  function addCart(id){
+    const p=products.find(x=>x.id===id); if(!p) return;
+    const ex=cart.find(c=>c.id===id);
+    if(ex) ex.qty++; else cart.push({...p,qty:1});
+    updateCart();
+    toast(`${p.emoji||'✅'} Savatchaga qo'shildi!`);
+  }
+  function removeCart(id){cart=cart.filter(c=>c.id!==id);updateCart();}
+  function updateCart(){
+    const cnt=cart.reduce((s,c)=>s+c.qty,0);
+    document.getElementById('cartCount').textContent=cnt;
+    const body=document.getElementById('cartBody'),foot=document.getElementById('cartFoot');
+    if(!cart.length){
+      body.innerHTML='<div class="cart-empty"><span style="font-size:3rem">🛍️</span><span>Savatcha bo\'sh</span></div>';
+      foot.style.display='none';
+    } else {
+      body.innerHTML=cart.map(c=>`<div class="cart-item">
+        <div class="cart-img">${c.imageUrl?`<img src="${c.imageUrl}" alt="${c.name}"/>`:(c.emoji||'👕')}</div>
+        <div class="cart-info"><div class="cart-name">${c.name} ×${c.qty}</div><div class="cart-price">${fmt(c.price*c.qty)}</div></div>
+        <button class="cart-rm" onclick="removeCart('${c.id}')">✕</button>
+      </div>`).join('');
+      foot.style.display='block';
+      document.getElementById('cartTot').textContent=fmt(cart.reduce((s,c)=>s+c.price*c.qty,0));
+    }
+  }
+  function toggleCart(){document.getElementById('cartSide').classList.toggle('open');document.getElementById('cartBG').classList.toggle('open');}
+  window.addCart=addCart; window.removeCart=removeCart; window.toggleCart=toggleCart;
+  function toggleLike(id,btn){if(likes.has(id)){likes.delete(id);btn.textContent='🤍';}else{likes.add(id);btn.textContent='❤️';toast('❤️ Sevimlilarga qo\'shildi!');}}
+  window.toggleLike=toggleLike;
+
+  // ORDER
+  function openOM(){
+    document.getElementById('OM').classList.add('open');
+    toggleCart();
+    // QR kod yaratish
+    const cardNumber = (shopSettings.cardNumber || '9860080311778528').replace(/\s/g,'');
+    const qrEl = document.getElementById('qrCode');
+    if(qrEl){
+      qrEl.innerHTML = '';
+      try {
+        new QRCode(qrEl, {
+          text: cardNumber,
+          width: 100,
+          height: 100,
+          colorDark: '#2a1a20',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch(e) {
+        qrEl.innerHTML = `<div style="width:100px;height:100px;background:#f7f0f2;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#2a1a20;text-align:center;padding:6px">${cardNumber.match(/.{1,4}/g).join(' ')}</div>`;
+      }
+    }
+  }
+  function closeOM(){document.getElementById('OM').classList.remove('open');}
+  window.openOM=openOM; window.closeOM=closeOM;
+
+  async function submitOrder(){
+    const name=document.getElementById('oN').value.trim();
+    const phone1=document.getElementById('oP1').value.trim();
+    const phone2=document.getElementById('oP2').value.trim();
+    const addr=document.getElementById('oA').value.trim();
+    const note=document.getElementById('oNote').value.trim();
+    if(!name||!phone1){toast('Iltimos majburiy maydonlarni to\'ldiring');return;}
+    try{
+      await db.collection('orders').add({
+        customerName:name, phone:phone1, phone2, address:addr, note,
+        items:cart.map(c=>({id:c.id,name:c.name,price:c.price,qty:c.qty,emoji:c.emoji||'👕',imageUrl:c.imageUrl||''})),
+        total:cart.reduce((s,c)=>s+c.price*c.qty,0),
+        status:'payment_pending',
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      cart=[];updateCart();closeOM();
+      toast('🎉 Buyurtmangiz qabul qilindi! To\'lovni amalga oshiring.');
+    }catch(e){toast('❌ Xatolik: '+e.message);}
+  }
+  window.submitOrder=submitOrder;
+
+  function shareLink(){
+    if(navigator.share) navigator.share({title:'Style Shop',url:window.location.href});
+    else{navigator.clipboard?.writeText(window.location.href);toast('🔗 Havola nusxalandi!');}
+  }
+  window.shareLink=shareLink;
+
+  // AUTH
+  firebase.auth().onAuthStateChanged(user=>{
+    if(user&&document.getElementById('page-admin').classList.contains('active')){
+      document.getElementById('loginWrap').style.display='none';
+      document.getElementById('adminPanel').style.display='block';
+      document.getElementById('aName').textContent=user.email.split('@')[0];
+      loadData();
+    }
+  });
+
+  async function doLogin(){
+    const email=document.getElementById('lEmail').value;
+    const pass=document.getElementById('lPass').value;
+    document.getElementById('lErr').textContent='';
+    try{
+      await firebase.auth().signInWithEmailAndPassword(email,pass);
+      document.getElementById('loginWrap').style.display='none';
+      document.getElementById('adminPanel').style.display='block';
+      document.getElementById('aName').textContent=email.split('@')[0];
+      loadData();
+    }catch(e){document.getElementById('lErr').textContent='❌ Email yoki parol noto\'g\'ri';}
+  }
+  async function doLogout(){
+    await firebase.auth().signOut();
+    document.getElementById('loginWrap').style.display='flex';
+    document.getElementById('adminPanel').style.display='none';
+    goPage('home');
+  }
+  window.doLogin=doLogin; window.doLogout=doLogout;
+
+  // ADMIN NAV
+  function showAPage(name,btn){
+    document.querySelectorAll('.a-page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.a-nav-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById('a-'+name).classList.add('active');
+    if(btn)btn.classList.add('active');
+    document.getElementById('aPageTitle').textContent={dash:'Dashboard',prods:'Mahsulotlar',orders:'Buyurtmalar',users:'Foydalanuvchilar',settings:'Sozlamalar'}[name]||name;
+    if(name==='settings') applySettings();
+  }
+  window.showAPage=showAPage;
+
+  // ADMIN PRODUCTS
+  function renderAProds(){
+    const q=(document.getElementById('aPS')?.value||'').toLowerCase();
+    const cat=document.getElementById('aPC')?.value||'';
+    const badge=document.getElementById('aPB')?.value||'';
+    const f=products.filter(p=>(!q||p.name?.toLowerCase().includes(q))&&(!cat||p.cat===cat)&&(!badge||p.badge===badge));
+    const totalEl=document.getElementById('prodTotalTxt');
+    if(totalEl) totalEl.textContent=f.length;
+    if(!f.length){document.getElementById('aProdsT').innerHTML='<div class="empty-st">👗 Mahsulot yo\'q</div>';return;}
+    document.getElementById('aProdsT').innerHTML=`<table class="adm-table">
+      <thead><tr><th>Rasm</th><th>Mahsulot</th><th>Narx</th><th>Kategoriya</th><th>Holat</th><th>Yetkazish</th><th>Amal</th></tr></thead>
+      <tbody>${f.map(p=>`<tr>
+        <td>${p.imageUrl?`<img class="adm-thumb" src="${p.imageUrl}" alt="${p.name}"/>`:`<div class="adm-thumb-e">${p.emoji||'👕'}</div>`}</td>
+        <td><strong style="color:#f5eff2">${p.name}</strong><div style="font-size:.7rem;color:rgba(245,239,242,.4)">${p.cat}</div></td>
+        <td style="color:var(--pink);font-weight:700">${fmt(p.price)}</td>
+        <td style="color:rgba(245,239,242,.5)">${badgeChip(p.badge)}</td>
+        <td style="color:var(--blue);font-size:.73rem">${p.delivery||shopSettings.deliveryDays||'—'}</td>
+        <td style="color:rgba(245,239,242,.4);font-size:.72rem">★ ${p.stars||'—'}</td>
+        <td><div class="adm-act">
+          <button class="adm-act-btn" onclick="editProd('${p.id}')">✏️</button>
+          <button class="adm-act-btn del" onclick="askDel('${p.id}')">🗑️</button>
+        </div></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+  window.renderAProds=renderAProds;
+
+  function renderAOrders(){
+    const f2=document.getElementById('aOF')?.value||'';
+    const f=f2?orders.filter(o=>o.status===f2):orders;
+    if(!f.length){document.getElementById('aOrdersT').innerHTML='<div class="empty-st">📦 Buyurtma yo\'q</div>';return;}
+    document.getElementById('aOrdersT').innerHTML=`<table class="adm-table">
+      <thead><tr><th>#</th><th>Mijoz</th><th>Tel</th><th>Summa</th><th>Holat</th><th>Sana</th><th>Amal</th></tr></thead>
+      <tbody>${f.map(o=>`<tr>
+        <td style="color:var(--pink);font-weight:700">#${o.id.slice(-4).toUpperCase()}</td>
+        <td style="font-weight:500">${o.customerName||'—'}<div style="font-size:.7rem;color:rgba(245,239,242,.4)">${o.address||''}</div></td>
+        <td style="color:rgba(245,239,242,.5);font-size:.75rem">${o.phone||'—'}${o.phone2?'<br>'+o.phone2:''}</td>
+        <td style="font-weight:700;color:var(--green)">${fmt(o.total)}</td>
+        <td>${statusChip(o.status)}</td>
+        <td style="color:rgba(245,239,242,.4);font-size:.72rem">${o.createdAt?.toDate?.()?.toLocaleDateString('uz-UZ')||'—'}</td>
+        <td><div class="adm-act">
+          <button class="adm-act-btn" onclick="nextSt('${o.id}','${o.status}')" title="Keyingi">▶️</button>
+          <button class="adm-act-btn" onclick="confirmPayment('${o.id}')" title="To\'lovni tasdiqlash" ${o.status!=='payment_pending'?'style=\"opacity:.3\"':''}>✅</button>
+        </div></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+  window.renderAOrders=renderAOrders;
+
+  function renderDashOrders(){
+    const el=document.getElementById('dashOrders');
+    if(!orders.length){el.innerHTML='<div class="empty-st">📦 Hali buyurtma yo\'q</div>';return;}
+    el.innerHTML=`<table class="adm-table"><thead><tr><th>#</th><th>Mijoz</th><th>Summa</th><th>Holat</th><th>Sana</th></tr></thead>
+    <tbody>${orders.slice(0,6).map(o=>`<tr>
+      <td style="color:var(--pink);font-weight:700">#${o.id.slice(-4).toUpperCase()}</td>
+      <td>${o.customerName||'—'}</td>
+      <td style="font-weight:700;color:var(--green)">${fmt(o.total)}</td>
+      <td>${statusChip(o.status)}</td>
+      <td style="color:rgba(245,239,242,.4);font-size:.72rem">${o.createdAt?.toDate?.()?.toLocaleDateString('uz-UZ')||'—'}</td>
+    </tr>`).join('')}</tbody></table>`;
+  }
+
+  async function nextSt(id,cur){
+    const next={new:'processing',processing:'payment_pending',payment_pending:'payment_confirmed',payment_confirmed:'shipped',shipped:'done',done:'done'}[cur]||'processing';
+    try{await db.collection('orders').doc(id).update({status:next});toast('✅ Status: '+next);}
+    catch(e){toast('❌ Xatolik');}
+  }
+  async function confirmPayment(id){
+    try{
+      await db.collection('orders').doc(id).update({status:'payment_confirmed',paymentConfirmedAt:firebase.firestore.FieldValue.serverTimestamp()});
+      toast('✅ To\'lov tasdiqlandi!');
+    }catch(e){toast('❌ Xatolik');}
+  }
+  window.nextSt=nextSt; window.confirmPayment=confirmPayment;
+
+  function renderAUsers(){
+    const el = document.getElementById('aUsersT');
+    if(!el) return;
+    const badgeEl = document.getElementById('userTotalBadge');
+    if(badgeEl) badgeEl.textContent = dbUsers.length + ' ta';
+    if(!dbUsers.length){
+      el.innerHTML='<div class="adm-card"><div class="empty-st">👥 Foydalanuvchi yo\'q</div></div>';
+      return;
+    }
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem">
+      ${dbUsers.map(u=>{
+        const uOrders = orders.filter(o=>o.userId===u.id||o.phone===u.phone);
+        const initials = (u.name||'?').split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2);
+        const pts = u.bonusPoints||0;
+        let level='🥉',lvlColor='#cd7f32';
+        if(pts>=1000){level='👑';lvlColor='#e07a95';}
+        else if(pts>=500){level='🥇';lvlColor='#fbbf24';}
+        else if(pts>=200){level='🥈';lvlColor='#94a3b8';}
+        else if(pts>=100){level='🥉';lvlColor='#cd7f32';}
+        return `<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;transition:all .2s;animation:fadeIn .4s ease" onmouseover="this.style.background='rgba(244,167,185,.06)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,.04)';this.style.transform='none'">
+          <!-- Header -->
+          <div style="background:linear-gradient(135deg,rgba(224,122,149,.3),rgba(196,85,112,.2));padding:1.2rem;display:flex;align-items:center;gap:.8rem">
+            <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--pink-deep),#c45570);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;border:2px solid rgba(255,255,255,.2)">
+              ${u.avatarUrl?`<img src="${u.avatarUrl}" style="width:100%;height:100%;object-fit:cover" alt="${u.name}"/>`:`<span style="font-family:'Playfair Display',serif">${initials||'?'}</span>`}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;color:#f5eff2;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.name||'Noma\'lum'}</div>
+              <div style="font-size:.72rem;color:rgba(245,239,242,.5);margin-top:.1rem">${u.email||'—'}</div>
+            </div>
+            <div style="font-size:1.3rem" title="Daraja">${level}</div>
+          </div>
+          <!-- Info -->
+          <div style="padding:1rem;display:flex;flex-direction:column;gap:.5rem">
+            <div style="display:flex;align-items:center;gap:.5rem;font-size:.8rem">
+              <span style="color:rgba(245,239,242,.4);width:16px">📞</span>
+              <span style="color:#f5eff2">${u.phone||'—'}</span>
+              ${u.phone2?`<span style="color:rgba(245,239,242,.3)">•</span><span style="color:rgba(245,239,242,.6)">${u.phone2}</span>`:''}
+            </div>
+            <div style="display:flex;align-items:center;gap:.5rem;font-size:.8rem">
+              <span style="color:rgba(245,239,242,.4);width:16px">📍</span>
+              <span style="color:rgba(245,239,242,.7)">${u.address||'Manzil kiritilmagan'}</span>
+            </div>
+            ${u.birthday?`<div style="display:flex;align-items:center;gap:.5rem;font-size:.8rem"><span style="color:rgba(245,239,242,.4);width:16px">🎂</span><span style="color:rgba(245,239,242,.7)">${u.birthday}</span></div>`:''}
+          </div>
+          <!-- Stats -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(255,255,255,.06)">
+            <div style="padding:.7rem;text-align:center;border-right:1px solid rgba(255,255,255,.06)">
+              <div style="font-size:1.1rem;font-weight:700;color:var(--green)">${uOrders.length}</div>
+              <div style="font-size:.65rem;color:rgba(245,239,242,.4)">Buyurtma</div>
+            </div>
+            <div style="padding:.7rem;text-align:center;border-right:1px solid rgba(255,255,255,.06)">
+              <div style="font-size:1.1rem;font-weight:700;color:var(--yellow)">⭐${pts}</div>
+              <div style="font-size:.65rem;color:rgba(245,239,242,.4)">Ball</div>
+            </div>
+            <div style="padding:.7rem;text-align:center">
+              <div style="font-size:1.1rem;font-weight:700;color:var(--pink)">${Math.round(uOrders.filter(o=>o.status==='done').reduce((s,o)=>s+(o.total||0),0)/1000)}K</div>
+              <div style="font-size:.65rem;color:rgba(245,239,242,.4)">So'm</div>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  // ═══ BUYURTMALAR - alohida tugmalar bilan ═══
+  function renderAOrders(){
+    const f2=document.getElementById('aOF')?.value||'';
+    const f=f2?orders.filter(o=>o.status===f2):orders;
+    if(!f.length){
+      document.getElementById('aOrdersT').innerHTML='<div class="adm-card"><div class="empty-st">📦 Buyurtma yo\'q</div></div>';
+      return;
+    }
+    document.getElementById('aOrdersT').innerHTML = f.map(o=>`
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:1.2rem;margin-bottom:.8rem;transition:all .3s;animation:fadeIn .4s ease" onmouseover="this.style.background='rgba(244,167,185,.05)'" onmouseout="this.style.background='rgba(255,255,255,.04)'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.8rem;flex-wrap:wrap;gap:.5rem">
+          <div style="display:flex;align-items:center;gap:.8rem">
+            <div style="background:var(--pink-glow);border:1px solid rgba(244,167,185,.2);border-radius:8px;padding:.3rem .7rem;font-size:.8rem;font-weight:700;color:var(--pink)">#${o.id.slice(-4).toUpperCase()}</div>
+            <div>
+              <div style="font-weight:600;color:#f5eff2;font-size:.9rem">${o.customerName||'—'}</div>
+              <div style="font-size:.72rem;color:rgba(245,239,242,.4)">${o.createdAt?.toDate?.()?.toLocaleString('uz-UZ')||'—'}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:.6rem">
+            <div style="font-weight:700;color:var(--green);font-size:1rem">${fmt(o.total)}</div>
+            ${statusChip(o.status)}
+          </div>
+        </div>
+
+        <!-- Mahsulotlar -->
+        <div style="background:rgba(255,255,255,.03);border-radius:10px;padding:.7rem;margin-bottom:.8rem;font-size:.78rem;color:rgba(245,239,242,.6)">
+          ${(o.items||[]).map(i=>`<span style="margin-right:.5rem">${i.emoji||'👕'} ${i.name} ×${i.qty}</span>`).join('')||'—'}
+        </div>
+
+        <!-- Kontakt -->
+        <div style="display:flex;gap:1.5rem;margin-bottom:.8rem;font-size:.78rem;flex-wrap:wrap">
+          <span style="color:rgba(245,239,242,.5)">📞 ${o.phone||'—'}${o.phone2?' • '+o.phone2:''}</span>
+          <span style="color:rgba(245,239,242,.5)">📍 ${o.address||'—'}</span>
+          ${o.note?`<span style="color:rgba(245,239,242,.4)">💬 ${o.note}</span>`:''}
+        </div>
+
+        <!-- STATUS TUGMALARI - alohida animatsiya bilan -->
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <button onclick="setOrderStatus('${o.id}','new')" style="
+            padding:.4rem .9rem;border-radius:8px;border:1px solid rgba(96,165,250,.3);
+            background:${o.status==='new'?'rgba(96,165,250,.25)':'rgba(96,165,250,.08)'};
+            color:var(--blue);font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:600;cursor:pointer;
+            transition:all .2s;transform:${o.status==='new'?'scale(1.05)':'scale(1)'}
+          " onmouseover="this.style.background='rgba(96,165,250,.25)'" onmouseout="this.style.background='${o.status==='new'?'rgba(96,165,250,.25)':'rgba(96,165,250,.08)'}'">
+            🆕 Yangi
+          </button>
+          <button onclick="setOrderStatus('${o.id}','payment_pending')" style="
+            padding:.4rem .9rem;border-radius:8px;border:1px solid rgba(251,191,36,.3);
+            background:${o.status==='payment_pending'?'rgba(251,191,36,.25)':'rgba(251,191,36,.08)'};
+            color:var(--yellow);font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:600;cursor:pointer;
+            transition:all .2s;transform:${o.status==='payment_pending'?'scale(1.05)':'scale(1)'}
+          " onmouseover="this.style.background='rgba(251,191,36,.25)'" onmouseout="this.style.background='${o.status==='payment_pending'?'rgba(251,191,36,.25)':'rgba(251,191,36,.08)'}'">
+            💳 To'lov kutilmoqda
+          </button>
+          <button onclick="setOrderStatus('${o.id}','payment_confirmed')" style="
+            padding:.4rem .9rem;border-radius:8px;border:1px solid rgba(74,222,128,.3);
+            background:${o.status==='payment_confirmed'?'rgba(74,222,128,.25)':'rgba(74,222,128,.08)'};
+            color:var(--green);font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:600;cursor:pointer;
+            transition:all .2s;transform:${o.status==='payment_confirmed'?'scale(1.05)':'scale(1)'}
+          " onmouseover="this.style.background='rgba(74,222,128,.25)'" onmouseout="this.style.background='${o.status==='payment_confirmed'?'rgba(74,222,128,.25)':'rgba(74,222,128,.08)'}'">
+            ✅ To'lov tasdiqlandi
+          </button>
+          <button onclick="setOrderStatus('${o.id}','shipped')" style="
+            padding:.4rem .9rem;border-radius:8px;border:1px solid rgba(244,167,185,.3);
+            background:${o.status==='shipped'?'rgba(244,167,185,.25)':'rgba(244,167,185,.08)'};
+            color:var(--pink);font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:600;cursor:pointer;
+            transition:all .2s;transform:${o.status==='shipped'?'scale(1.05)':'scale(1)'}
+          " onmouseover="this.style.background='rgba(244,167,185,.25)'" onmouseout="this.style.background='${o.status==='shipped'?'rgba(244,167,185,.25)':'rgba(244,167,185,.08)'}'">
+            🚚 Yuborildi
+          </button>
+          <button onclick="setOrderStatus('${o.id}','done')" style="
+            padding:.4rem .9rem;border-radius:8px;border:1px solid rgba(74,222,128,.3);
+            background:${o.status==='done'?'rgba(74,222,128,.3)':'rgba(74,222,128,.06)'};
+            color:var(--green);font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:600;cursor:pointer;
+            transition:all .2s;transform:${o.status==='done'?'scale(1.05)':'scale(1)'}
+          " onmouseover="this.style.background='rgba(74,222,128,.3)'" onmouseout="this.style.background='${o.status==='done'?'rgba(74,222,128,.3)':'rgba(74,222,128,.06)'}'">
+            🎉 Tugallandi
+          </button>
+          <button onclick="setOrderStatus('${o.id}','cancelled')" style="
+            padding:.4rem .9rem;border-radius:8px;border:1px solid rgba(248,113,113,.3);
+            background:${o.status==='cancelled'?'rgba(248,113,113,.25)':'rgba(248,113,113,.06)'};
+            color:var(--red);font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:600;cursor:pointer;
+            transition:all .2s;transform:${o.status==='cancelled'?'scale(1.05)':'scale(1)'}
+          " onmouseover="this.style.background='rgba(248,113,113,.25)'" onmouseout="this.style.background='${o.status==='cancelled'?'rgba(248,113,113,.25)':'rgba(248,113,113,.06)'}'">
+            ❌ Bekor qilish
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+  window.renderAOrders=renderAOrders;
+
+  async function setOrderStatus(id, status){
+    try{
+      await db.collection('orders').doc(id).update({status, updatedAt: firebase.firestore.FieldValue.serverTimestamp()});
+      toast('✅ Status o\'zgartirildi: '+status);
+      // Bonus points if done
+      if(status==='done'){
+        const order = orders.find(o=>o.id===id);
+        if(order && order.userId){
+          const pts = Math.floor((order.total||0)/10000);
+          if(pts>0) await bAddPoints(order.userId, pts, `🛒 Xarid uchun (${(order.total||0).toLocaleString('uz-UZ')} so'm)`);
+        }
+      }
+    }catch(e){toast('❌ Xatolik: '+e.message);}
+  }
+  window.setOrderStatus=setOrderStatus;
+
+  // ═══ KATEGORIYALAR ═══
+  const DEFAULT_CATS = [
+    {id:'erkaklar', name:'Erkaklar', emoji:'👔', color:'purple'},
+    {id:'ayollar', name:'Ayollar', emoji:'👗', color:'pink'},
+    {id:'bolalar', name:'Bolalar', emoji:'🧒', color:'green'},
+    {id:'sumkalar', name:'Sumkalar', emoji:'👜', color:'yellow'},
+    {id:'kosmetika', name:'Kosmetika', emoji:'💄', color:'pink'},
+    {id:'oyinchoqlar', name:"O'yinchoqlar", emoji:'🧸', color:'blue'},
+  ];
+  let customCats = [...DEFAULT_CATS];
+
+  const catGradients = {
+    pink:'linear-gradient(135deg,#fce4ec,#f4a7b9)',
+    purple:'linear-gradient(135deg,#e8d5f5,#c9aee8)',
+    green:'linear-gradient(135deg,#d5f0e8,#a8ddc5)',
+    yellow:'linear-gradient(135deg,#fef3c7,#fde68a)',
+    blue:'linear-gradient(135deg,#dbeafe,#bfdbfe)',
+    red:'linear-gradient(135deg,#fee2e2,#fca5a5)',
+  };
+
+  async function renderAdminCats(){
+    const el = document.getElementById('aCatsT');
+    if(!el) return;
+    try{
+      const snap = await db.collection('categories').get();
+      if(!snap.empty) customCats = snap.docs.map(d=>({id:d.id,...d.data()}));
+    }catch(e){}
+
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.8rem;margin-bottom:1rem">
+        ${customCats.map(c=>`
+          <div style="background:${catGradients[c.color]||catGradients.pink};border-radius:14px;padding:1rem;display:flex;align-items:center;justify-content:space-between;transition:all .2s;animation:fadeIn .4s ease">
+            <div style="display:flex;align-items:center;gap:.6rem">
+              <span style="font-size:1.8rem">${c.emoji}</span>
+              <div>
+                <div style="font-weight:600;font-size:.85rem;color:var(--dark)">${c.name}</div>
+                ${c.desc?`<div style="font-size:.7rem;color:var(--gray)">${c.desc}</div>`:''}
+              </div>
+            </div>
+            <div style="display:flex;gap:.3rem">
+              <button onclick="editCat('${c.id}')" style="background:rgba(255,255,255,.6);border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center">✏️</button>
+              ${!DEFAULT_CATS.find(d=>d.id===c.id)?`<button onclick="deleteCat('${c.id}')" style="background:rgba(255,100,100,.2);border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center">🗑️</button>`:''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  let catEditId = null;
+  function openCatModal(id=null){
+    catEditId = id;
+    document.getElementById('catModalTitle').textContent = id ? 'Kategoriyani tahrirlash' : 'Yangi kategoriya';
+    if(id){
+      const cat = customCats.find(c=>c.id===id);
+      if(cat){
+        document.getElementById('cName').value = cat.name||'';
+        document.getElementById('cEmoji').value = cat.emoji||'';
+        document.getElementById('cColor').value = cat.color||'pink';
+        document.getElementById('cDesc').value = cat.desc||'';
+      }
+    } else {
+      ['cName','cEmoji','cDesc'].forEach(i=>document.getElementById(i).value='');
+      document.getElementById('cColor').value = 'pink';
+    }
+    document.getElementById('catModal').classList.add('open');
+  }
+  function closeCatModal(){ document.getElementById('catModal').classList.remove('open'); }
+  window.openCatModal=openCatModal; window.closeCatModal=closeCatModal;
+  window.editCat = id => openCatModal(id);
+
+  async function saveCat(){
+    const name = document.getElementById('cName').value.trim();
+    const emoji = document.getElementById('cEmoji').value.trim()||'📂';
+    const color = document.getElementById('cColor').value;
+    const desc = document.getElementById('cDesc').value.trim();
+    if(!name){toast('Kategoriya nomini kiriting');return;}
+    try{
+      if(catEditId){
+        await db.collection('categories').doc(catEditId).set({name,emoji,color,desc},{merge:true});
+        toast('✅ Kategoriya yangilandi!');
+      } else {
+        const id = name.toLowerCase().replace(/\s+/g,'_').replace(/'/g,'');
+        await db.collection('categories').doc(id).set({name,emoji,color,desc,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+        toast('✅ Kategoriya qo\'shildi!');
+      }
+      closeCatModal();
+      renderAdminCats();
+    }catch(e){toast('❌ '+e.message);}
+  }
+  window.saveCat=saveCat;
+
+  async function deleteCat(id){
+    if(!confirm('Kategoriyani o\'chirasizmi?')) return;
+    try{
+      await db.collection('categories').doc(id).delete();
+      toast('🗑️ Kategoriya o\'chirildi!');
+      renderAdminCats();
+    }catch(e){toast('❌ Xatolik');}
+  }
+  window.deleteCat=deleteCat;
+
+  // CRUD
+  function openPM(){
+    editId=null;
+    document.getElementById('PMTitle').textContent='Yangi mahsulot';
+    ['mN','mPr','mE','mSt','mD','mDel','mSize'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('mCat').value='Erkaklar';
+    document.getElementById('mB').value='';
+    document.getElementById('mImg').value='';
+    document.getElementById('imgPreview').classList.remove('show');
+    document.getElementById('PM').classList.add('open');
+  }
+
+  function editProd(id){
+    const p=products.find(x=>x.id===id); if(!p) return;
+    editId=id;
+    document.getElementById('PMTitle').textContent='Mahsulotni tahrirlash';
+    document.getElementById('mN').value=p.name||'';
+    document.getElementById('mPr').value=p.price||'';
+    document.getElementById('mCat').value=p.cat||'Erkaklar';
+    document.getElementById('mB').value=p.badge||'';
+    document.getElementById('mE').value=p.emoji||'';
+    document.getElementById('mSt').value=p.stars||'';
+    document.getElementById('mD').value=p.desc||'';
+    document.getElementById('mDel').value=p.delivery||'';
+    document.getElementById('mSize').value=p.sizes||'';
+    document.getElementById('mImg').value=p.imageUrl||'';
+    const preview=document.getElementById('imgPreview');
+    if(p.imageUrl){preview.src=p.imageUrl;preview.classList.add('show');}
+    else{preview.classList.remove('show');}
+    document.getElementById('PM').classList.add('open');
+  }
+
+  function closePM(){document.getElementById('PM').classList.remove('open');}
+  window.openPM=openPM; window.editProd=editProd; window.closePM=closePM;
+
+  async function saveProd(){
+    const name=document.getElementById('mN').value.trim();
+    const price=parseInt(document.getElementById('mPr').value);
+    const cat=document.getElementById('mCat').value;
+    const badge=document.getElementById('mB').value||null;
+    const emoji=document.getElementById('mE').value.trim()||'👕';
+    const stars=parseFloat(document.getElementById('mSt').value)||4.5;
+    const desc=document.getElementById('mD').value.trim();
+    const delivery=document.getElementById('mDel').value.trim();
+    const sizes=document.getElementById('mSize').value.trim();
+    const imageUrl=document.getElementById('mImg').value;
+    if(!name||!price){toast('Maydonlarni to\'ldiring');return;}
+    const btn=document.getElementById('mSave');
+    btn.textContent='⏳...'; btn.disabled=true;
+    try{
+      const data={name,price,cat,badge,emoji,stars,desc,delivery,sizes,imageUrl};
+      if(editId) await db.collection('products').doc(editId).update(data);
+      else await db.collection('products').add({...data,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      closePM();toast('✅ Saqlandi!');
+    }catch(e){toast('❌ '+e.message);}
+    btn.textContent='💾 Saqlash'; btn.disabled=false;
+  }
+  window.saveProd=saveProd;
+
+  function askDel(id){deleteId=id;document.getElementById('CM').classList.add('open');}
+  function closeCM(){document.getElementById('CM').classList.remove('open');deleteId=null;}
+  async function doDelete(){
+    try{await db.collection('products').doc(deleteId).delete();toast('🗑️ O\'chirildi');}
+    catch(e){toast('❌ Xatolik');}
+    closeCM();
+  }
+  window.askDel=askDel; window.closeCM=closeCM; window.doDelete=doDelete;
+
+  // TOAST
+  function toast(msg){
+    const t=document.getElementById('toast');
+    t.textContent=msg; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),3500);
+  }
+
+  // INIT
+  loadData();
+
+  // ═══════════════════════════
+  // PROFILE FUNCTIONS
+  // ═══════════════════════════
+  const pv = id => document.getElementById(id)?.value || '';
+  const pStatusTxt = {new:'🆕 Yangi',processing:'⚙️ Jarayonda',payment_pending:'💳 To\'lov kutilmoqda',payment_confirmed:'✅ To\'lov tasdiqlandi',shipped:'🚚 Yuborildi',done:'🎉 Tugallandi',cancelled:'❌ Bekor'};
+
+  function pSwitchTab(tab, btn) {
+    document.querySelectorAll('.p-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('pLoginForm').style.display = tab==='login' ? 'flex' : 'none';
+    document.getElementById('pRegForm').style.display = tab==='register' ? 'flex' : 'none';
+  }
+  window.pSwitchTab = pSwitchTab;
+
+  async function pDoLogin() {
+    const email = pv('pLEmail'), pass = pv('pLPass');
+    document.getElementById('pLErr').textContent = '';
+    if(!email||!pass) { document.getElementById('pLErr').textContent='Barcha maydonlarni to\'ldiring'; return; }
+    try { await auth.signInWithEmailAndPassword(email, pass); }
+    catch(e) { document.getElementById('pLErr').textContent = '❌ Email yoki parol noto\'g\'ri'; }
+  }
+  window.pDoLogin = pDoLogin;
+
+  async function pDoRegister() {
+    const name=pv('pRName'), email=pv('pREmail'), pass=pv('pRPass'), phone=pv('pRPhone');
+    document.getElementById('pRErr').textContent = '';
+    if(!name||!email||!pass||!phone) { document.getElementById('pRErr').textContent='Barcha maydonlarni to\'ldiring'; return; }
+    if(pass.length < 6) { document.getElementById('pRErr').textContent='Parol kamida 6 ta belgi'; return; }
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(email, pass);
+      await db.collection('users').doc(cred.user.uid).set({
+        name, email, phone, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      toast('✅ Muvaffaqiyatli ro\'yxatdan o\'tdingiz!');
+    } catch(e) {
+      document.getElementById('pRErr').textContent = e.code==='auth/email-already-in-use' ? '❌ Bu email allaqachon ro\'yxatdan o\'tgan' : '❌ '+e.message;
+    }
+  }
+  window.pDoRegister = pDoRegister;
+
+  async function pDoLogout() {
+    await auth.signOut();
+    document.getElementById('pAuthScreen').style.display = 'flex';
+    document.getElementById('pContent').style.display = 'none';
+    toast('Chiqildi 👋');
+  }
+  window.pDoLogout = pDoLogout;
+
+  async function pShowProfile(user) {
+    document.getElementById('pAuthScreen').style.display = 'none';
+    document.getElementById('pContent').style.display = 'block';
+    document.getElementById('pEmailDisplay').textContent = user.email;
+    const doc = await db.collection('users').doc(user.uid).get();
+    if(doc.exists) {
+      const d = doc.data();
+      const name = d.name || user.email.split('@')[0];
+      document.getElementById('pNameDisplay').textContent = name;
+      // Initials
+      const initials = name.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2);
+      const initialsEl = document.getElementById('pAvatarInitials');
+      if(initialsEl) initialsEl.textContent = initials || 'SS';
+      if(d.avatarUrl) document.getElementById('pAvatar').innerHTML = `<img src="${d.avatarUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover"/>`;
+      if(d.phone) document.getElementById('pPhoneDisplay').textContent = d.phone;
+      document.getElementById('pfName').value = d.name || '';
+      document.getElementById('pfAge').value = d.age || '';
+      document.getElementById('pfPhone1').value = d.phone || '';
+      document.getElementById('pfPhone2').value = d.phone2 || '';
+      document.getElementById('pfAddr').value = d.address || '';
+      if(d.birthday) {
+        document.getElementById('pfBday').value = d.birthday;
+        const today = new Date(), bd = new Date(d.birthday);
+        if(bd.getDate()===today.getDate() && bd.getMonth()===today.getMonth()) {
+          document.getElementById('pBdAlert').style.display = 'flex';
+          document.getElementById('pBdBadge').style.display = 'inline-block';
+        }
+      }
+      // Points & level
+      const pts = d.bonusPoints || 0;
+      const totalBalEl = document.getElementById('pTotalBal');
+      if(totalBalEl) totalBalEl.textContent = pts;
+      let level = '🥉 Yangi';
+      if(pts>=1000) level='👑 VIP';
+      else if(pts>=500) level='🥇 Oltin';
+      else if(pts>=200) level='🥈 Kumush';
+      else if(pts>=100) level='🥉 Bronza';
+      const lvlEl = document.getElementById('pLevelBadge');
+      if(lvlEl) lvlEl.textContent = level;
+    } else {
+      const name = user.email.split('@')[0];
+      document.getElementById('pNameDisplay').textContent = name;
+      const initialsEl = document.getElementById('pAvatarInitials');
+      if(initialsEl) initialsEl.textContent = name.slice(0,2).toUpperCase();
+    }
+    pLoadOrders(user);
+  }
+
+  async function pSaveProfile() {
+    const user = auth.currentUser; if(!user) return;
+    const data = {
+      name: pv('pfName'), age: parseInt(pv('pfAge'))||null,
+      birthday: pv('pfBday'), phone: pv('pfPhone1'),
+      phone2: pv('pfPhone2'), address: pv('pfAddr'),
+      email: user.email, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    try {
+      await db.collection('users').doc(user.uid).set(data, {merge:true});
+      document.getElementById('pNameDisplay').textContent = data.name || user.email;
+      toast('✅ Profil saqlandi!');
+    } catch(e) { toast('❌ Xatolik: '+e.message); }
+  }
+  window.pSaveProfile = pSaveProfile;
+
+  async function pUploadAvatar(input) {
+    const file = input.files[0]; if(!file) return;
+    toast('📸 Yuklanmoqda...');
+    try {
+      const fd = new FormData(); fd.append('image', file);
+      const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {method:'POST', body:fd});
+      const data = await res.json();
+      if(data.success) {
+        const url = data.data.url;
+        await db.collection('users').doc(auth.currentUser.uid).set({avatarUrl:url}, {merge:true});
+        document.getElementById('pAvatar').innerHTML = `<img src="${url}" alt="Avatar"/>`;
+        toast('✅ Rasm yangilandi!');
+      }
+    } catch(e) { toast('❌ Rasm yuklanmadi'); }
+  }
+
+  function pLoadOrders(user) {
+    db.collection('orders').orderBy('createdAt','desc').get().then(snap => {
+      const myOrders = snap.docs.map(d=>({id:d.id,...d.data()}))
+        .filter(o => o.userId===user.uid || o.phone===pv('pfPhone1'));
+      document.getElementById('pSO').textContent = myOrders.length;
+      document.getElementById('pSS').textContent = Math.round(myOrders.filter(o=>o.status==='done').reduce((s,o)=>s+(o.total||0),0)/1000);
+      document.getElementById('pSP').textContent = myOrders.filter(o=>['new','payment_pending','processing'].includes(o.status)).length;
+      const el = document.getElementById('pMyOrders');
+      if(!myOrders.length) {
+        el.innerHTML = '<div class="empty-st"><div style="font-size:2.5rem">📦</div><p>Hali buyurtma yo\'q</p></div>';
+        return;
+      }
+      el.innerHTML = myOrders.map(o=>`
+        <div class="p-order-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem">
+            <span style="font-weight:700;color:var(--pink-deep);font-size:.85rem">#${o.id.slice(-4).toUpperCase()}</span>
+            <span style="font-size:.72rem;color:var(--gray)">${o.createdAt?.toDate?.()?.toLocaleDateString('uz-UZ')||'—'}</span>
+          </div>
+          <div style="font-size:.8rem;color:var(--gray);margin-bottom:.5rem">${(o.items||[]).map(i=>(i.emoji||'👕')+' '+i.name).join(', ')}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-weight:700;font-size:.9rem">${(o.total||0).toLocaleString('uz-UZ')} so'm</span>
+            <span class="o-st ost-${o.status}">${pStatusTxt[o.status]||o.status}</span>
+          </div>
+        </div>`).join('');
+    });
+  }
+
+  function pCopyPromo() {
+    navigator.clipboard?.writeText('BIRTHDAY15');
+    toast('🎁 Promo kod nusxalandi: BIRTHDAY15');
+  }
+  window.pCopyPromo = pCopyPromo;
+
+  function pOpenSection(name) {
+    document.getElementById('pInfoPanel').style.display = name==='info' ? 'block' : 'none';
+    document.getElementById('pOrdersPanel').style.display = name==='orders' ? 'block' : 'none';
+  }
+  function pCloseSection(name) {
+    document.getElementById('p'+name.charAt(0).toUpperCase()+name.slice(1)+'Panel').style.display = 'none';
+  }
+  window.pOpenSection = pOpenSection;
+  window.pCloseSection = pCloseSection;
+
+  // ═══════════════════════════
+  // NEW ADMIN FUNCTIONS
+  // ═══════════════════════════
+
+  function toggleSidebar(){
+    const sb = document.getElementById('adminSidebar');
+    const ov = document.getElementById('sideOverlay');
+    const isOpen = sb.style.left === '0px';
+    sb.style.left = isOpen ? '-260px' : '0px';
+    ov.style.display = isOpen ? 'none' : 'block';
+  }
+  function closeSidebar(){
+    document.getElementById('adminSidebar').style.left = '-260px';
+    document.getElementById('sideOverlay').style.display = 'none';
+  }
+  window.toggleSidebar = toggleSidebar;
+  window.closeSidebar = closeSidebar;
+
+  function renderDashChart(){
+    // Weekly orders chart
+    const days = ['Dush','Sesh','Chor','Pay','Jum','Shan','Yak'];
+    const today = new Date();
+    const counts = Array(7).fill(0);
+    orders.forEach(o => {
+      if(o.createdAt?.toDate) {
+        const d = o.createdAt.toDate();
+        const diff = Math.floor((today - d) / 86400000);
+        if(diff >= 0 && diff < 7) counts[6-diff]++;
+      }
+    });
+    const max = Math.max(...counts, 1);
+    const labelsEl = document.getElementById('weekLabels');
+    const chartEl = document.getElementById('weekChart');
+    const totalEl = document.getElementById('weekTotal');
+    if(!labelsEl) return;
+    labelsEl.innerHTML = days.map(d=>`<span>${d}</span>`).join('');
+    chartEl.innerHTML = counts.map((c,i)=>`
+      <div class="chart-bar" style="height:${Math.max((c/max)*100,4)}%" title="${days[i]}: ${c} ta buyurtma"></div>
+    `).join('');
+    if(totalEl) totalEl.textContent = `Jami: ${counts.reduce((a,b)=>a+b,0)} ta`;
+  }
+
+  function renderCatStats(){
+    const el = document.getElementById('catStats');
+    if(!el) return;
+    const cats = ['Erkaklar','Ayollar','Bolalar','Sumkalar','Kosmetika','O\'yinchoqlar'];
+    const colors = ['#c9aee8','#f4a7b9','#a8ddc5','#fde68a','#fbcfe8','#bfdbfe'];
+    const counts = cats.map(c => products.filter(p=>p.cat===c).length);
+    const total = products.length || 1;
+    el.innerHTML = cats.map((c,i)=>`
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.25rem">
+          <span style="color:#f5eff2">${c}</span>
+          <span style="color:rgba(245,239,242,.5)">${counts[i]} ta</span>
+        </div>
+        <div style="height:5px;background:rgba(255,255,255,.06);border-radius:4px">
+          <div style="height:100%;width:${(counts[i]/total)*100}%;background:${colors[i]};border-radius:4px"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderTopProds(){
+    const el = document.getElementById('topProds');
+    if(!el) return;
+    const top = [...products].sort((a,b)=>(b.stars||0)-(a.stars||0)).slice(0,5);
+    if(!top.length){el.innerHTML='<div class="empty-st">Mahsulot yo\'q</div>';return;}
+    el.innerHTML = top.map((p,i)=>`
+      <div style="display:flex;align-items:center;gap:.8rem;padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
+        <div style="width:24px;height:24px;border-radius:50%;background:${i===0?'rgba(251,191,36,.2)':i===1?'rgba(200,200,200,.1)':'rgba(180,120,80,.1)'};display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:${i===0?'#fbbf24':i===1?'#aaa':'#c87941'}">${i+1}</div>
+        <div style="font-size:1.2rem">${p.emoji||'👕'}</div>
+        <div style="flex:1">
+          <div style="font-size:.82rem;font-weight:500;color:#f5eff2">${p.name}</div>
+          <div style="font-size:.7rem;color:rgba(245,239,242,.4)">${p.cat}</div>
+        </div>
+        <div style="font-size:.78rem;color:#fbbf24">★ ${p.stars||'—'}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderOrderMiniStats(){
+    const newC = orders.filter(o=>o.status==='new').length;
+    const payC = orders.filter(o=>o.status==='payment_pending').length;
+    const shipC = orders.filter(o=>o.status==='shipped').length;
+    const doneC = orders.filter(o=>o.status==='done').length;
+    const els = {oStatNew:newC,oStatPay:payC,oStatShip:shipC,oStatDone:doneC};
+    Object.entries(els).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.textContent=val;});
+    // New order alert
+    const alertEl = document.getElementById('aNewOrderAlert');
+    if(alertEl) alertEl.style.display = newC>0 ? 'block' : 'none';
+  }
+
+  // Promo modal
+  function openPromoModal(){
+    document.getElementById('promoModal')?.classList.add('open');
+  }
+  function closePromoModal(){
+    document.getElementById('promoModal')?.classList.remove('open');
+  }
+  window.openPromoModal = openPromoModal;
+  window.closePromoModal = closePromoModal;
+
+  async function savePromo(){
+    const code = document.getElementById('pmCode')?.value.trim().toUpperCase();
+    const discount = parseInt(document.getElementById('pmDiscount')?.value)||0;
+    const type = document.getElementById('pmType')?.value || 'percent';
+    const limit = parseInt(document.getElementById('pmLimit')?.value)||100;
+    if(!code||!discount){toast('Maydonlarni to\'ldiring');return;}
+    try{
+      await db.collection('promoCodes').doc(code).set({code,discount,type,limit,used:0,active:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      closePromoModal();
+      toast('✅ Promo kod yaratildi!');
+      renderAPromo();
+    }catch(e){toast('❌ '+e.message);}
+  }
+  window.savePromo = savePromo;
+
+  async function renderAPromo(){
+    const el = document.getElementById('aPromoT');
+    if(!el) return;
+    try{
+      const snap = await db.collection('promoCodes').get();
+      if(snap.empty){el.innerHTML='<div class="empty-st">Promo kod yo\'q</div>';return;}
+      el.innerHTML=`<table class="adm-table">
+        <thead><tr><th>Kod</th><th>Chegirma</th><th>Ishlatilgan</th><th>Holat</th><th>Amal</th></tr></thead>
+        <tbody>${snap.docs.map(d=>{const p=d.data();return`<tr>
+          <td><code style="background:rgba(255,255,255,.08);padding:.2rem .6rem;border-radius:6px;font-size:.85rem;color:var(--pink)">${p.code}</code></td>
+          <td style="color:var(--green);font-weight:700">${p.discount}${p.type==='percent'?'%':' so\'m'}</td>
+          <td style="color:rgba(245,239,242,.5)">${p.used||0}/${p.limit||'∞'}</td>
+          <td><span class="adm-chip ${p.active?'chip-green':'chip-red'}">${p.active?'✅ Faol':'❌ Nofaol'}</span></td>
+          <td><div class="adm-act">
+            <button class="adm-act-btn" onclick="togglePromo('${d.id}',${p.active})">${p.active?'⏸️':'▶️'}</button>
+            <button class="adm-act-btn del" onclick="deletePromo('${d.id}')">🗑️</button>
+          </div></td>
+        </tr>`}).join('')}</tbody>
+      </table>`;
+    }catch(e){el.innerHTML='<div class="empty-st">Yuklanmadi</div>';}
+  }
+
+  async function togglePromo(id, active){
+    await db.collection('promoCodes').doc(id).update({active:!active});
+    toast('✅ Yangilandi!'); renderAPromo();
+  }
+  async function deletePromo(id){
+    await db.collection('promoCodes').doc(id).delete();
+    toast('🗑️ O\'chirildi!'); renderAPromo();
+  }
+  window.togglePromo = togglePromo; window.deletePromo = deletePromo;
+
+  // Banner save
+  async function saveBanner(){
+    const data={title:v('bTitle'),text:v('bText'),btn:v('bBtn'),emoji:v('bEmoji')};
+    try{await db.collection('settings').doc('banner').set(data);toast('✅ Banner saqlandi!');}
+    catch(e){toast('❌ '+e.message);}
+  }
+  window.saveBanner = saveBanner;
+
+  // Listen auth for profile page
+  auth.onAuthStateChanged(user => {
+    if(user && document.getElementById('page-profile')?.classList.contains('active')) {
+      pShowProfile(user);
+    }
+    if(document.getElementById('page-bonus')?.classList.contains('active')) {
+      if(user) bShowBonus(user);
+      else { document.getElementById('bonusLoginMsg').style.display='block'; document.getElementById('bonusContent').style.display='none'; }
+    }
+  });
+
+  // ═══════════════════════════
+  // BONUS / REFERRAL SYSTEM
+  // ═══════════════════════════
+
+  // Default gifts (can be managed from admin)
+  const DEFAULT_GIFTS = [
+    { id:'g1', emoji:'🎁', name:'5% chegirma', points:100, desc:'Keyingi xaridda' },
+    { id:'g2', emoji:'🚚', name:'Bepul yetkazish', points:150, desc:'1 ta buyurtma uchun' },
+    { id:'g3', emoji:'👗', name:'10% chegirma', points:250, desc:'Istalgan mahsulotga' },
+    { id:'g4', emoji:'🎀', name:'Sovg\'a qutisi', points:400, desc:'Maxsus sovg\'a' },
+    { id:'g5', emoji:'💄', name:'Kosmetika to\'plami', points:600, desc:'Asosiy to\'plam' },
+    { id:'g6', emoji:'👑', name:'VIP a\'zo', points:1000, desc:'1 oylik VIP status' },
+  ];
+
+  let bCurrentUser = null;
+  let bUserData = {};
+  let bGifts = [...DEFAULT_GIFTS];
+
+  async function bShowBonus(user) {
+    bCurrentUser = user;
+    document.getElementById('bonusLoginMsg').style.display = 'none';
+    document.getElementById('bonusContent').style.display = 'block';
+
+    // Set referral link
+    const refLink = `${window.location.origin}${window.location.pathname}?ref=${user.uid.slice(0,8)}`;
+    document.getElementById('bRefLink').textContent = refLink;
+
+    // Load user bonus data
+    const doc = await db.collection('users').doc(user.uid).get();
+    if(doc.exists) bUserData = doc.data();
+
+    const points = bUserData.bonusPoints || 0;
+    const refCount = bUserData.referrals || 0;
+    const refPoints = (refCount * 50);
+    const orderPoints = bUserData.orderPoints || 0;
+
+    document.getElementById('bTotalPoints').textContent = points;
+    document.getElementById('bRefCount').textContent = refCount;
+    document.getElementById('bRefPoints').textContent = refPoints;
+    document.getElementById('bOrderPoints').textContent = orderPoints;
+
+    // Level
+    let level = '🥉 Yangi', nextLevel = 100;
+    if(points >= 1000) { level = '👑 VIP'; nextLevel = 1000; }
+    else if(points >= 500) { level = '🥇 Oltin'; nextLevel = 1000; }
+    else if(points >= 200) { level = '🥈 Kumush'; nextLevel = 500; }
+    else if(points >= 100) { level = '🥉 Bronza'; nextLevel = 200; }
+    document.getElementById('bLevel').textContent = level;
+    document.getElementById('bLevelInfo').textContent = `${points}/${nextLevel} bal`;
+    document.getElementById('bProgressBar').style.width = Math.min((points/nextLevel)*100, 100) + '%';
+
+    // History
+    bLoadHistory(user.uid);
+
+    // Load gifts
+    bLoadGifts(points);
+
+    // Check referral
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    if(refCode && refCode !== user.uid.slice(0,8) && !bUserData.refUsed) {
+      await bApplyReferral(user.uid, refCode);
+    }
+
+    // Birthday bonus
+    if(bUserData.birthday && !bUserData.birthdayBonusGiven) {
+      const today = new Date(), bd = new Date(bUserData.birthday);
+      if(bd.getDate()===today.getDate() && bd.getMonth()===today.getMonth()) {
+        await bAddPoints(user.uid, 100, '🎂 Tug\'ilgan kun bonusi');
+        await db.collection('users').doc(user.uid).update({birthdayBonusGiven: new Date().getFullYear()});
+        toast('🎂 Tug\'ilgan kun uchun 100 bal qo\'shildi!');
+      }
+    }
+  }
+
+  async function bLoadHistory(uid) {
+    const el = document.getElementById('bHistory');
+    try {
+      const snap = await db.collection('users').doc(uid).collection('bonusHistory').orderBy('createdAt','desc').limit(10).get();
+      if(snap.empty) { el.innerHTML='<div class="empty-st" style="padding:1rem">Hali tarix yo\'q</div>'; return; }
+      el.innerHTML = snap.docs.map(d => {
+        const h = d.data();
+        const isPlus = h.points > 0;
+        return `<div class="bh-item">
+          <div class="bh-icon ${isPlus?'bh-plus':'bh-minus'}">${isPlus?'➕':'➖'}</div>
+          <div class="bh-info">
+            <div class="bh-title">${h.reason||'—'}</div>
+            <div class="bh-date">${h.createdAt?.toDate?.()?.toLocaleDateString('uz-UZ')||'—'}</div>
+          </div>
+          <div class="bh-pts ${isPlus?'plus':'minus'}">${isPlus?'+':''}${h.points} bal</div>
+        </div>`;
+      }).join('');
+    } catch(e) { el.innerHTML='<div class="empty-st">Tarix yuklanmadi</div>'; }
+  }
+
+  async function bLoadGifts(userPoints) {
+    const el = document.getElementById('bGiftGrid');
+    // Load gifts from Firestore (admin tomonidan qo'shilgan)
+    try {
+      const snap = await db.collection('gifts').get();
+      if(!snap.empty) bGifts = snap.docs.map(d=>({id:d.id,...d.data()}));
+    } catch(e) {}
+
+    el.innerHTML = bGifts.map(g => {
+      const canBuy = userPoints >= g.points;
+      return `<div class="gift-card ${canBuy?'':'locked'}">
+        <div class="gift-emoji">${g.emoji}</div>
+        <div class="gift-name">${g.name}</div>
+        <div style="font-size:.75rem;color:var(--gray);margin-bottom:.2rem">${g.desc||''}</div>
+        <div class="gift-pts">⭐ ${g.points} bal</div>
+        <button class="gift-btn" ${canBuy?'':'disabled'} onclick="bRedeemGift('${g.id}','${g.name}',${g.points})">${canBuy?'Olish':'Yetarli bal yo\'q'}</button>
+      </div>`;
+    }).join('');
+  }
+
+  async function bRedeemGift(giftId, giftName, points) {
+    if(!bCurrentUser) return;
+    const currentPoints = bUserData.bonusPoints || 0;
+    if(currentPoints < points) { toast('❌ Yetarli bal yo\'q'); return; }
+    try {
+      await db.collection('users').doc(bCurrentUser.uid).update({
+        bonusPoints: firebase.firestore.FieldValue.increment(-points)
+      });
+      await db.collection('users').doc(bCurrentUser.uid).collection('bonusHistory').add({
+        points: -points, reason: `🎁 ${giftName} olindi`, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await db.collection('giftOrders').add({
+        userId: bCurrentUser.uid, giftId, giftName, points,
+        status: 'pending', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      bUserData.bonusPoints = currentPoints - points;
+      document.getElementById('bTotalPoints').textContent = bUserData.bonusPoints;
+      bLoadGifts(bUserData.bonusPoints);
+      bLoadHistory(bCurrentUser.uid);
+      toast(`🎁 ${giftName} muvaffaqiyatli olindi!`);
+    } catch(e) { toast('❌ Xatolik: '+e.message); }
+  }
+
+  async function bAddPoints(uid, points, reason) {
+    try {
+      await db.collection('users').doc(uid).update({
+        bonusPoints: firebase.firestore.FieldValue.increment(points)
+      });
+      await db.collection('users').doc(uid).collection('bonusHistory').add({
+        points, reason, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e) {}
+  }
+
+  async function bApplyReferral(newUserId, refCode) {
+    try {
+      // Find referrer
+      const snap = await db.collection('users').get();
+      const referrer = snap.docs.find(d => d.id.slice(0,8) === refCode);
+      if(referrer) {
+        // Give points to referrer
+        await bAddPoints(referrer.id, 50, '👥 Do\'st taklif qilindi');
+        // Give points to new user
+        await bAddPoints(newUserId, 20, '🎉 Referal orqali qo\'shildingiz');
+        // Update referrer stats
+        await db.collection('users').doc(referrer.id).update({
+          referrals: firebase.firestore.FieldValue.increment(1)
+        });
+        // Mark as used
+        await db.collection('users').doc(newUserId).update({ refUsed: true });
+        toast('🎉 Referal bonusi: +20 bal!');
+      }
+    } catch(e) {}
+  }
+
+  function bCopyRef() {
+    const link = document.getElementById('bRefLink').textContent;
+    navigator.clipboard?.writeText(link);
+    if(navigator.share) navigator.share({title:'Style Shop', text:'Bu do\'konni sinab ko\'ring!', url: link});
+    else toast('🔗 Referal havola nusxalandi!');
+  }
+  window.bCopyRef = bCopyRef;
+  window.bRedeemGift = bRedeemGift;
+
+  // Add bonus points when order is completed
+  const origNextSt = window.nextSt;
+  window.nextSt = async function(id, cur) {
+    await origNextSt(id, cur);
+    if(cur === 'shipped') {
+      // Order done - give points
+      const order = orders.find(o => o.id === id);
+      if(order && order.userId) {
+        const pts = Math.floor((order.total||0) / 10000);
+        if(pts > 0) {
+          await bAddPoints(order.userId, pts, `🛒 Xarid uchun (${(order.total||0).toLocaleString('uz-UZ')} so'm)`);
+          await db.collection('users').doc(order.userId).update({ orderPoints: firebase.firestore.FieldValue.increment(pts) });
+        }
+      }
+    }
+  };
+
+  // Admin: render gifts
+  async function renderAdminGifts() {
+    const el = document.getElementById('aGiftsT');
+    const oel = document.getElementById('aGiftOrdersT');
+    if(!el) return;
+    try {
+      const snap = await db.collection('gifts').get();
+      const gifts = snap.empty ? DEFAULT_GIFTS : snap.docs.map(d=>({id:d.id,...d.data()}));
+      if(!gifts.length){ el.innerHTML='<div class="empty-st">Sovg\'a yo\'q</div>'; }
+      else {
+        el.innerHTML=`<table><thead><tr><th>Emoji</th><th>Nomi</th><th>Bal</th><th>Tavsif</th><th>Amal</th></tr></thead>
+        <tbody>${gifts.map(g=>`<tr>
+          <td style="font-size:1.5rem">${g.emoji||'🎁'}</td>
+          <td><strong>${g.name}</strong></td>
+          <td style="color:var(--yellow);font-weight:700">⭐ ${g.points}</td>
+          <td style="color:var(--gray)">${g.desc||'—'}</td>
+          <td><button class="act-btn del" onclick="deleteGift('${g.id}')">🗑️</button></td>
+        </tr>`).join('')}</tbody></table>`;
+      }
+      // Gift orders
+      const oSnap = await db.collection('giftOrders').orderBy('createdAt','desc').limit(20).get();
+      if(oSnap.empty){ oel.innerHTML='<div class="empty-st">Sovg\'a buyurtma yo\'q</div>'; }
+      else {
+        oel.innerHTML=`<table><thead><tr><th>Foydalanuvchi</th><th>Sovg'a</th><th>Bal</th><th>Holat</th><th>Amal</th></tr></thead>
+        <tbody>${oSnap.docs.map(d=>{const o=d.data();return`<tr>
+          <td>${o.userId?.slice(0,8)||'—'}</td>
+          <td>${o.giftName||'—'}</td>
+          <td style="color:var(--yellow)">⭐ ${o.points}</td>
+          <td><span class="a-chip ${o.status==='done'?'chip-green':'chip-yellow'}">${o.status==='done'?'✅ Berildi':'⏳ Kutilmoqda'}</span></td>
+          <td><button class="act-btn" onclick="markGiftDone('${d.id}')" title="Berildi">✅</button></td>
+        </tr>`}).join('')}</tbody></table>`;
+      }
+    } catch(e) { el.innerHTML='<div class="empty-st">Yuklanmadi</div>'; }
+  }
+
+  let gEditId = null;
+  function openGiftModal(){ gEditId=null; document.getElementById('GMTitle').textContent='Yangi sovg\'a'; ['gName','gEmoji','gPoints','gDesc'].forEach(id=>document.getElementById(id).value=''); document.getElementById('GM').classList.add('open'); }
+  function closeGM(){ document.getElementById('GM').classList.remove('open'); }
+  window.openGiftModal=openGiftModal; window.closeGM=closeGM;
+
+  async function saveGift(){
+    const name=document.getElementById('gName').value.trim();
+    const emoji=document.getElementById('gEmoji').value.trim()||'🎁';
+    const points=parseInt(document.getElementById('gPoints').value);
+    const desc=document.getElementById('gDesc').value.trim();
+    if(!name||!points){ toast('Maydonlarni to\'ldiring'); return; }
+    try{
+      await db.collection('gifts').add({name,emoji,points,desc,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      closeGM(); toast('✅ Sovg\'a qo\'shildi!'); renderAdminGifts();
+    }catch(e){ toast('❌ '+e.message); }
+  }
+  window.saveGift=saveGift;
+
+  async function deleteGift(id){
+    try{ await db.collection('gifts').doc(id).delete(); toast('🗑️ O\'chirildi'); renderAdminGifts(); }
+    catch(e){ toast('❌ Xatolik'); }
+  }
+  async function markGiftDone(id){
+    try{ await db.collection('giftOrders').doc(id).update({status:'done'}); toast('✅ Berildi deb belgilandi!'); renderAdminGifts(); }
+    catch(e){ toast('❌ Xatolik'); }
+  }
+  window.deleteGift=deleteGift; window.markGiftDone=markGiftDone;
+
+  // Update admin nav system
+  const origShowAPage2 = window.showAPage;
+  window.showAPage = function(name, btn) {
+    document.querySelectorAll('.a-page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.adm-nav').forEach(n=>n.classList.remove('active'));
+    const pg = document.getElementById('a-'+name);
+    if(pg) pg.classList.add('active');
+    if(btn) btn.classList.add('active');
+    const navBtn = document.getElementById('nav-'+name);
+    if(navBtn) navBtn.classList.add('active');
+    const titles={dash:'Dashboard',prods:'Mahsulotlar',orders:'Buyurtmalar',users:'Foydalanuvchilar',promo:'Promo kodlar',gifts:'Sovg\'alar',banner:'Banner',settings:'Sozlamalar'};
+    const el = document.getElementById('aPageTitle');
+    if(el) el.textContent = titles[name]||name;
+    // Load specific data
+    if(name==='dash'){renderDashChart();renderCatStats();renderTopProds();}
+    if(name==='gifts') renderAdminGifts();
+    if(name==='promo') renderAPromo();
+    if(name==='settings') { applySettings(); renderAdminCats(); }
+    if(name==='users') renderAUsers();
+    // Close sidebar on mobile
+    if(window.innerWidth < 1024) closeSidebar();
+  };
+
+  // Admin: Add gift bonus points to user manually
+  window.addBonusToUser = async function(userId, pts, reason) {
+    await bAddPoints(userId, pts, reason);
+    toast(`✅ ${pts} bal qo'shildi!`);
+  };
+
+</script>
+</body>
+</html>
